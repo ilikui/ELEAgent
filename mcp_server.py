@@ -136,6 +136,22 @@ def build_review_report(
 
 
 @mcp.tool()
+def export_pin_excel(inventory_json: str, output_path: str = "engineering/reports/pin_signal_inventory.xlsx") -> str:
+    """Export a hardware inventory JSON to an Excel PIN/signal workbook.
+
+    Includes MCU vs I/O-expander/device classification, component inventory,
+    nets/cross-sheet links and field definitions. Formats known evidence only.
+    """
+    source = safe_path(inventory_json, want_dir=False)
+    if source.suffix.lower() != ".json":
+        raise ValueError("inventory_json must point to a .json file.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".xlsx":
+        raise ValueError("output_path must end with .xlsx.")
+    return run_script("export_pin_excel.py", [str(source), "--out", str(output)])
+
+
+@mcp.tool()
 def get_workspace_info() -> str:
     """Return the configured workspace root and available read-only analysis tools."""
     root = workspace_root()
@@ -144,7 +160,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
