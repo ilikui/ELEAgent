@@ -51,6 +51,36 @@ class PinExcelExportTests(unittest.TestCase):
             finally:
                 workbook.close()
 
+    def test_prefers_explicit_function_owner_over_device_class_inference(self):
+        inventory = {
+            "components": [
+                {"ref": "U1", "device_type": "MCU", "part_number": "MCU-PN", "package": "LQFP"}
+            ],
+            "pins": [
+                {"component_ref": "U1", "pin_number": "1", "pin_name": "PTA0",
+                 "net_id": "N1", "function_owner": "外部安全监控器"}
+            ],
+            "nets": [{"net_id": "N1", "name_as_drawn": "SAFE_MON"}]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "inventory.json"
+            output = root / "pin_signals.xlsx"
+            source.write_text(json.dumps(inventory), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), str(source), "--out", str(output)],
+                capture_output=True, text=True, check=False
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            workbook = load_workbook(output, read_only=True, data_only=True)
+            try:
+                ws = workbook["PIN信号清单"]
+                headers = [cell.value for cell in ws[1]]
+                row = [cell.value for cell in ws[2]]
+                self.assertEqual(row[headers.index("功能归属（MCU/扩展芯片/其他）")], "外部安全监控器")
+            finally:
+                workbook.close()
+
     def test_rejects_invalid_inventory_arrays(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
