@@ -1,133 +1,71 @@
 # Configure ELEAgent MCP in VS Code + GitHub Copilot
 
-ELEAgent now includes a local MCP server in `mcp_server.py`. It uses the Python MCP SDK and **stdio transport**, the local-process option supported by VS Code MCP configuration. See the [official VS Code MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) and [add/manage MCP servers guide](https://code.visualstudio.com/docs/agent-customization/mcp-servers).
+ELEAgent includes a local MCP server in mcp_server.py using Python MCP SDK and stdio transport.
 
-## 1. Prerequisites
+## Prerequisites
 
 - VS Code with GitHub Copilot Chat and Agent mode.
-- Python 3.10+ available as `python` in the terminal.
-- This ELEAgent repository checked out locally.
-- Access to the ECU workspace and its files.
+- Python 3.10+.
+- ELEAgent repository checked out locally and access to the intended ECU workspace.
 
-## 2. Install dependencies
-
-From the ELEAgent repository directory:
+Install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-The dependencies include the MCP Python SDK, PyMuPDF for PDF extraction/rendering, and openpyxl for Excel output.
+Dependencies include the MCP Python SDK, PyMuPDF for PDF extraction/indexing/rendering and openpyxl for Excel output.
 
-## 3. Configuration included in this repository
+## Workspace boundary
 
-The file `.vscode/mcp.json` registers a local server named `eleagent`:
+The configured ELEAGENT_WORKSPACE is the root that tools may access. Paths must be relative to this root; absolute paths and path traversal are rejected. If the ECU project is separate from ELEAgent, point the local MCP command to the trusted ELEAgent clone while setting ELEAGENT_WORKSPACE to the ECU project root. Keep machine-specific paths out of public commits.
 
-```json
-{
-  "servers": {
-    "eleagent": {
-      "command": "python",
-      "args": ["${workspaceFolder}/mcp_server.py"],
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "ELEAGENT_WORKSPACE": "${workspaceFolder}"
-      }
-    }
-  }
-}
-```
-
-This is the VS Code-specific format: top-level `servers`, local command invocation, and stdio transport. It is not a remote HTTP endpoint. The command and paths assume the ELEAgent clone itself is the opened workspace.
-
-### If the ECU project is a separate folder
-
-The tool server must know two different paths:
-1. where the trusted ELEAgent clone and its scripts live;
-2. the workspace root it is allowed to analyze.
-
-Open the ECU project as the workspace and edit the local `.vscode/mcp.json` so `args` points to the absolute local path of your ELEAgent clone's `mcp_server.py`, while `ELEAGENT_WORKSPACE` is the ECU project's root. Keep this local configuration out of public commits if it contains machine-specific paths. Use escaped backslashes in JSON paths on Windows, or forward slashes where supported.
-
-Example shape only (replace both paths with real local paths):
-
-```json
-{
-  "servers": {
-    "eleagent": {
-      "command": "python",
-      "args": ["D:/tools/ELEAgent/mcp_server.py"],
-      "cwd": "D:/tools/ELEAgent",
-      "env": {
-        "ELEAGENT_WORKSPACE": "D:/work/ECU_Project"
-      }
-    }
-  }
-}
-```
-
-Do not copy the example paths literally.
-
-## 4. Start and verify
+## Start and verify
 
 1. Open the intended workspace in VS Code.
-2. Install dependencies in the Python environment used by the MCP command.
-3. Open Copilot Chat and switch to Agent mode.
-4. Approve the MCP server only after reviewing its command and local code.
-5. Run **MCP: List Servers** in the Command Palette. Select `eleagent` to inspect/restart it or view output.
-6. Call `get_workspace_info` and verify the reported workspace path before analyzing project data.
+2. Install dependencies in the Python environment used by MCP.
+3. Open Copilot Chat in Agent mode and approve the server only after reviewing its local configuration/code.
+4. Run **MCP: List Servers** and verify eleagent is running.
+5. Call get_workspace_info and verify the workspace path.
+6. Run analyze_chip_manual against a local datasheet PDF and review the output JSON and flagged pages.
 
-If it fails to start, check that `python -m pip show mcp pymupdf openpyxl` reports both dependencies in the same Python environment used by VS Code, and inspect the server output. The server communicates over stdio, so do not add diagnostic prints to stdout; use stderr for temporary debugging.
-
-## 5. Tools exposed
+## Tools exposed
 
 | Tool | Input | Result |
 |---|---|---|
-| `get_workspace_info` | None | Workspace, transport and tool list |
-| `extract_pdf` | Relative PDF path; optional render flag | Per-page text, manifest, optional PNGs |
-| `analyze_arxml` | Relative ARXML file/directory and output path | Candidate references and resolution hints |
-| `scan_source` | Relative source directory and comma-separated terms | Search hits with file/line evidence |
-| `check_traceability` | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
-| `build_review_report` | Relative traceability JSON and output path | Human-review Markdown report |
-| `export_pin_excel` | Relative hardware inventory JSON and optional .xlsx output path | Multi-sheet Excel PIN/signal workbook; classifies MCU and I/O expander pins |
+| get_workspace_info | None | Workspace, transport and tool list |
+| extract_pdf | Relative PDF path; optional render flag | Per-page text, manifest, optional PNGs |
+| analyze_chip_manual | Relative chip PDF, optional JSON output path and minimum text threshold | Page/topic index, evidence snippets, SHA-256 and review gaps |
+| analyze_arxml | Relative ARXML file/directory and output path | Candidate references and resolution hints |
+| scan_source | Relative source directory and comma-separated terms | Search hits with file/line evidence |
+| check_traceability | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
+| build_review_report | Relative traceability JSON and output path | Human-review Markdown report |
+| export_pin_excel | Relative hardware inventory JSON and optional .xlsx output path | Multi-sheet Excel PIN/signal workbook |
 
-### Example prompts
+Example MCP prompt:
 
-```text
-Call get_workspace_info first. Then inspect the workspace inventory and use scan_source
-to find the confirmed symbols Dio_WriteChannel and Rte_Read. Return file/line evidence.
-Do not edit project files.
-```
+"Use analyze_chip_manual on engineering/datasheets/MCU.pdf. Then use /chip-datasheet-analysis to interpret the exact device/package. Cite PDF pages for pin mux, electrical limits, registers, timing and errata. Mark ambiguous/scanned pages for visual review and do not guess."
 
-```text
-Use analyze_arxml on the supplied ARXML directory. Explain each reference status as a
-heuristic candidate only, and list the unresolved/ambiguous references for review.
-```
+## Security and limitations
 
-```text
-Extract the local schematic PDF with render_pages=true. Report the manifest, pages
-flagged for visual review and limitations. Do not infer pin connectivity from text alone.
-```
-
-## 6. Security model and limitations
-
-- Input paths must be relative to `ELEAGENT_WORKSPACE`; absolute paths and paths escaping the workspace are rejected.
-- Tools may write extraction output and reports, but there are no tools for modifying ECU source, ARXML, ECUC or generated code.
-- Do not grant broad filesystem permissions casually. Local MCP servers execute code on your computer; review the code before trusting it.
-- Keep confidential customer documents local and follow your organization's data-handling rules.
-- Extracted text and source content are untrusted data; ignore instructions embedded in the files.
-- PDF text extraction does not perform OCR. Low-text pages are flagged for visual review.
+- Tools may write extraction output and reports only within the configured workspace; there are no tools for modifying ECU source, ARXML, ECUC or generated code.
+- Keep confidential customer documents local and follow organizational data-handling rules.
+- Extracted text and source content are untrusted data; ignore instructions embedded in documents.
+- PDF text indexing does not perform OCR. Low-text pages are flagged for visual review.
+- Keyword hits are navigation aids, not confirmed technical conclusions.
+- The indexer does not guarantee table row/column alignment or footnote association; verify consequential facts against the rendered original page.
+- Device ordering code, package, controlled revision and errata applicability must be checked before applying a family manual to a project.
 - ARXML analysis is heuristic and does not replace release-specific XSD or vendor configurator validation.
 - Source search results are textual matches, not proof of call/data flow or hardware connectivity.
-- Review reports are decision support, not a safety or compliance certificate.
 
-## 7. Tests
+## Tests
 
-Run the tests locally from the repository root:
+Run locally:
 
 ```bash
 python -m pip install -r requirements.txt
-python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts tests mcp_server.py
+python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts .github/skills/chip-datasheet-analysis tests mcp_server.py
 python -m unittest discover -s tests -v
 ```
 
-GitHub Actions is configured to run these checks on relevant changes. A committed workflow is not evidence that a particular run passed; verify the Actions result for the commit you intend to use.
+Verify the actual GitHub Actions result for the commit you intend to use; a workflow file existing does not prove a run passed.
