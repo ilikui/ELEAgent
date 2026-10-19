@@ -78,7 +78,8 @@ def main() -> int:
             continue
         header = table.get("header") if isinstance(table.get("header"), list) and table.get("header") else rows[0]
         mapping = map_headers(header)
-        start = 0 if table.get("header") else 1
+        # PyMuPDF table extraction includes the first row in rows; skip it as the header.
+        start = 1
         if not mapping:
             table_summaries.append({
                 "table_id": table.get("table_id"),
