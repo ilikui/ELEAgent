@@ -29,6 +29,7 @@ The configured ELEAGENT_WORKSPACE is the root that tools may access. Paths must 
 5. Call get_workspace_info and verify the workspace path.
 6. Run analyze_chip_manual against a local datasheet PDF and review the output JSON and flagged pages.
 7. Run extract_chip_manual_tables on the same PDF, then verify each consequential row against the rendered source page.
+8. Run normalize_chip_manual_tables on the candidate-table JSON to produce a reviewable candidate record set; do not use it as an approved specification without page review.
 
 ## Tools exposed
 
@@ -38,6 +39,7 @@ The configured ELEAGENT_WORKSPACE is the root that tools may access. Paths must 
 | extract_pdf | Relative PDF path; optional render flag | Per-page text, manifest, optional PNGs |
 | analyze_chip_manual | Relative chip PDF, optional JSON output path and minimum text threshold | Page/topic index, evidence snippets, SHA-256 and review gaps |
 | extract_chip_manual_tables | Relative chip PDF, optional JSON output path and minimum row count | Candidate raw tables with page citations, topic hints and review flags |
+| normalize_chip_manual_tables | Relative candidate-table JSON and optional output path | Header-mapped candidate records with raw rows, page provenance and review status |
 | analyze_arxml | Relative ARXML file/directory and output path | Candidate references and resolution hints |
 | scan_source | Relative source directory and comma-separated terms | Search hits with file/line evidence |
 | check_traceability | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
