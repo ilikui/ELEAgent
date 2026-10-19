@@ -31,6 +31,8 @@ class ArxmlAnalysisTests(unittest.TestCase):
             refs = [r for r in data["references"] if r["reference"] == "/Demo/SensorSwc"]
             self.assertEqual(len(refs), 1)
             self.assertEqual(refs[0]["resolution"], "resolved_unique")
+            self.assertTrue(refs[0]["xpath"].startswith("/AUTOSAR[1]/"))
+            self.assertTrue(refs[0]["target_candidates"][0]["xpath"])
 
     def test_duplicate_target_paths_are_marked_ambiguous(self):
         with tempfile.TemporaryDirectory() as temp:
