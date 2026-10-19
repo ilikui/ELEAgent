@@ -60,7 +60,7 @@ def main() -> int:
         metadata = doc.metadata or {}
         for page_index, page in enumerate(doc, start=1):
             raw_text = page.get_text("text") or ""
-            normalized = re.sub(r"\\s+", " ", raw_text).strip()
+            normalized = re.sub(r"\s+", " ", raw_text).strip()
             hits = []
             lowered = normalized.lower()
             for topic, terms in TOPICS.items():
