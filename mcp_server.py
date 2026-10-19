@@ -246,6 +246,57 @@ def merge_chip_identity_review(
 
 
 @mcp.tool()
+def review_pin_inventory(
+    inventory_json: str,
+    review_ledger_json: str,
+    output_path: str = "engineering/hardware/hardware_inventory_reviewed.json",
+) -> str:
+    """Apply a PIN review ledger without overwriting source evidence.
+
+    Allowed states: candidate, verified, conflict, rejected. Verified means evidence
+    reviewed only; it is not engineering approval or functional-safety sign-off.
+    """
+    inventory = safe_path(inventory_json, want_dir=False)
+    ledger = safe_path(review_ledger_json, want_dir=False)
+    if inventory.suffix.lower() != ".json" or ledger.suffix.lower() != ".json":
+        raise ValueError("Both input paths must point to .json files.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    return run_script("review_pin_inventory.py", [str(inventory), str(ledger), "--out", str(output)])
+
+@mcp.tool()
+def build_hardware_code_trace(
+    inventory_json: str,
+    arxml_index_json: str = "",
+    source_hits_json: str = "",
+    output_path: str = "engineering/traceability/hardware_code_trace.json",
+) -> str:
+    """Build an exact-name candidate graph from schematic nets/pins to ARXML/source.
+
+    Missing links are explicit gaps; matches are not proof of connectivity or runtime
+    data flow and do not replace AUTOSAR semantic validation.
+    """
+    inventory = safe_path(inventory_json, want_dir=False)
+    if inventory.suffix.lower() != ".json":
+        raise ValueError("inventory_json must point to a .json file.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    args = [str(inventory), "--out", str(output)]
+    if arxml_index_json.strip():
+        arxml = safe_path(arxml_index_json, want_dir=False)
+        if arxml.suffix.lower() != ".json":
+            raise ValueError("arxml_index_json must point to a .json file.")
+        args.extend(["--arxml-index", str(arxml)])
+    if source_hits_json.strip():
+        source = safe_path(source_hits_json, want_dir=False)
+        if source.suffix.lower() != ".json":
+            raise ValueError("source_hits_json must point to a .json file.")
+        args.extend(["--source-hits", str(source)])
+    return run_script("build_hardware_code_trace.py", args)
+
+@mcp.tool()
 def export_pin_excel(inventory_json: str, output_path: str = "engineering/reports/pin_signal_inventory.xlsx") -> str:
     """Export a hardware inventory JSON to an Excel PIN/signal workbook.
 
@@ -270,7 +321,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "review_chip_identity", "merge_chip_identity_review", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "review_chip_identity", "merge_chip_identity_review", "review_pin_inventory", "build_hardware_code_trace", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
