@@ -159,6 +159,31 @@ def normalize_chip_manual_tables(
 
 
 @mcp.tool()
+def review_chip_identity(
+    analysis_json: str,
+    manifest_json: str = "",
+    output_path: str = "engineering/chip_manual/chip_identity_review.json",
+) -> str:
+    """Compare manual identity candidates with an optional BOM/device manifest.
+
+    This conservative report preserves page evidence and hashes; every match remains
+    unconfirmed and requires checking the original manual and project BOM.
+    """
+    source = safe_path(analysis_json, want_dir=False)
+    if source.suffix.lower() != ".json":
+        raise ValueError("analysis_json must point to a .json file.")
+    args = [str(source), "--out", str(safe_path(output_path, must_exist=False, want_dir=False))]
+    if Path(output_path).suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    if manifest_json.strip():
+        manifest = safe_path(manifest_json, want_dir=False)
+        if manifest.suffix.lower() != ".json":
+            raise ValueError("manifest_json must point to a .json file.")
+        args.extend(["--manifest", str(manifest)])
+    return run_script("review_chip_identity.py", args, timeout=120)
+
+
+@mcp.tool()
 def analyze_arxml(arxml_path: str, output_path: str = "engineering/traceability/arxml_analysis.json") -> str:
     """Inventory ARXML names and candidate references. This is heuristic, not XSD/ECUC validation."""
     source = safe_path(arxml_path, want_dir=None)
@@ -225,7 +250,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "review_chip_identity", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
