@@ -1,9 +1,19 @@
 ---
 name: autosar-hw-code-traceability
-description: Evidence-backed analysis of circuit schematic PDFs, semiconductor manuals, AUTOSAR ARXML/configuration, embedded source and verification. Read-only by default; require approval before edits.
+description: Evidence-backed analysis of circuit schematic PDFs, semiconductor manuals, AUTOSAR ARXML/configuration, embedded source and verification. Use with available workspace or MCP tools; read-only by default and require approval before edits.
 ---
 
 # AUTOSAR Hardware-to-Code Traceability
+
+## Agent and MCP integration boundary
+
+This file is an Agent Skill: it provides workflow instructions. It is **not** an MCP server and must not be configured as an MCP executable or endpoint. In VS Code, load it through the repository's `.github/skills/` discovery path. When MCP servers are configured, use only tools actually exposed by those servers.
+
+- First inspect the tools available in the current client and determine which can read the workspace, list files, search code, or access GitHub.
+- If filesystem/repository tools are unavailable, ask the user to open the repository in a supported local agent or configure an appropriate MCP server; do not pretend to have read local files.
+- Prefer read-only file, search and analysis tools. Never assume a tool can run local Python scripts unless it explicitly supports command execution.
+- If a required script cannot be executed, provide the exact command for the user to run and clearly mark the analysis as incomplete.
+- Do not assume that an MCP server has access to local PDFs just because a file path was mentioned. Confirm the tool's workspace boundary and permissions first.
 
 ## Mission
 Build an evidence-backed chain:
@@ -61,6 +71,8 @@ Present a proposed change plan listing exact files, rationale, risk, generated-c
 Run only documented or explicitly supplied commands. Record exact command, working directory, exit code, toolchain/version and log path. Report tests/builds not run and why. Mark oscilloscope, bench, CANoe, HIL and vehicle checks NOT RUN unless actually performed.
 
 ## Tool commands
+Use these commands only in a local environment where Python and the repository are available. An MCP tool does not automatically have shell access.
+
 ```bash
 python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/to/schematic.pdf --out engineering/extracted/pdf_text --render
 python .github/skills/autosar-hw-code-traceability/scripts/inventory_arxml.py path/to/arxml --out engineering/traceability/arxml_inventory.json
