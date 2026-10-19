@@ -78,7 +78,11 @@ def _device_class(component: dict[str, Any]) -> str:
     return "未确认"
 
 
-def _function_owner(device_class: str) -> str:
+def _function_owner(device_class: str, pin: dict[str, Any] | None = None) -> str:
+    # Prefer an explicit, evidence-backed owner from the inventory over class inference.
+    explicit = _text((pin or {}).get("function_owner") or (pin or {}).get("function_owner_as_drawn")).strip()
+    if explicit:
+        return explicit
     if device_class == "MCU":
         return "MCU"
     if device_class == "扩展芯片":
@@ -137,7 +141,7 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
             _text(component.get("package")), _text(pin.get("pin_number")),
             _text(pin.get("pin_name_as_drawn") or pin.get("pin_name")),
             _text(pin.get("datasheet_function") or pin.get("function")),
-            _function_owner(device_class), _text(pin.get("signal_direction") or net.get("signal_direction")),
+            _function_owner(device_class, pin), _text(pin.get("signal_direction") or net.get("signal_direction")),
             _text(pin.get("electrical_domain") or net.get("electrical_domain")),
             _text(pin.get("connected_to") or endpoints),
             _text(pin.get("page") or pin.get("schematic_page")),
@@ -188,7 +192,7 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
     guide.append(["字段/规则", "说明"])
     guide_rows = [
         ("器件类别", "优先读取 components[].device_type/component_type/kind/category；MCU 和扩展芯片会单独分类。未知类型不会自动猜测。"),
-        ("功能归属", "MCU、扩展芯片或其他器件；这是根据清单中的器件类别归类，不代表已证明软件运行时的数据流。"),
+        ("功能归属", "优先使用 pins[].function_owner 或 function_owner_as_drawn 的显式值；缺省时才按器件类别推导。此字段不代表已证明软件运行时的数据流。"),
         ("PIN信号清单", "每个 pins 数组记录生成一行；器件/网络信息按 component_ref 和 net_id 关联。"),
         ("证据与置信度", "请填入原理图页码、位号、引脚、数据手册版本/页码及来源。空白字段表示输入数据没有提供，不会自动补造。"),
         ("示例数据", "示例硬件清单为占位数据，导出结果不可当作真实 ECU 引脚表。"),
