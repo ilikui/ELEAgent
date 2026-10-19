@@ -1,0 +1,35 @@
+name: Skill smoke tests
+
+on:
+  push:
+    paths:
+      - ".github/skills/autosar-hw-code-traceability/**"
+      - "tests/**"
+      - "schemas/**"
+      - "examples/**"
+      - "requirements.txt"
+      - ".github/workflows/skill-smoke-tests.yml"
+  pull_request:
+    paths:
+      - ".github/skills/autosar-hw-code-traceability/**"
+      - "tests/**"
+      - "schemas/**"
+      - "examples/**"
+      - "requirements.txt"
+      - ".github/workflows/skill-smoke-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run smoke tests
+        run: python -m unittest discover -s tests -v
+      - name: Validate example traceability structure
+        run: python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
