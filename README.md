@@ -46,6 +46,7 @@ See [MCP setup and security guide](docs/mcp-setup.md).
 | extract_pdf | Extract selectable per-page text, manifest and optional page images | Extraction output only |
 | analyze_chip_manual | Build a topic/page index of a chip manual, including document hash, snippets and review gaps | JSON report only |
 | extract_chip_manual_tables | Extract candidate tables with raw cells, PDF page, topic hints and review flags | JSON report only |
+| normalize_chip_manual_tables | Map recognized headers into candidate records while preserving raw rows, page citations and review status | JSON report only |
 | analyze_arxml | Index ARXML elements and candidate references | JSON report only |
 | scan_source | Search C/C++ and supported configuration files | JSON report only |
 | check_traceability | Validate traceability JSON shape and flag gaps | No |
