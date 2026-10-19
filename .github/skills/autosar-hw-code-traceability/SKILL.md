@@ -72,7 +72,7 @@ Example ledger:
 
 ## Schematic-net to software trace graph
 
-Run build_hardware_code_trace.py with the inventory and optional outputs from analyze_arxml.py and scan_source.py. It creates net-to-pin edges and exact-normalized-name ARXML/source candidates. Candidate ARXML records are tagged by likely ECUC, MCAL, IoHwAb, RTE or SWC naming. Findings flag nets without pin records, ARXML candidates or source candidates. Run check_traceability.py and build_review_report.py on the graph JSON to surface dangling edges and missing evidence. Exact-name matches and layer tags are navigation hints only; manually validate controlled ARXML release, configuration semantics, source call/data flow and verification evidence.
+Run build_hardware_code_trace.py with the inventory and optional outputs from analyze_arxml.py and scan_source.py. It creates net-to-pin edges and exact-normalized-name ARXML/source candidates. Candidate ARXML records are tagged by likely ECUC, MCAL, IoHwAb, RTE or SWC naming. Findings flag nets without pin records, ARXML candidates or source candidates, missing component part/package data, chip identity mismatches, pin records without evidence, unresolved ARXML references and explicit net conflicts. Run check_traceability.py and build_review_report.py on the graph JSON to surface dangling edges and missing evidence. Exact-name matches and layer tags are navigation hints only; manually validate controlled ARXML release, configuration semantics, source call/data flow and verification evidence.
 
 ## Workflow
 
