@@ -129,6 +129,30 @@ def _identity_summary(component: dict[str, Any]) -> tuple[str, str, str]:
     return status_text, "；".join(dict.fromkeys(candidates)), " | ".join(dict.fromkeys(evidence))
 
 
+def _pin_review_summary(pin: dict[str, Any]) -> tuple[str, str, str]:
+    review = pin.get("human_review")
+    if not isinstance(review, dict):
+        return "candidate / 未审核", "", "未提供独立人工审核记录"
+    entries = review.get("entries", [])
+    if not isinstance(entries, list):
+        entries = []
+    reviewers, notes, evidence = [], [], []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        who = " / ".join(_text(entry.get(k)) for k in ("reviewer", "reviewed_at") if entry.get(k))
+        if who:
+            reviewers.append(who)
+        if entry.get("note"):
+            notes.append(_text(entry.get("note")))
+        ev = _evidence(entry.get("evidence"))
+        if ev:
+            evidence.append(ev)
+    state = _text(review.get("state") or "candidate")
+    if state == "verified":
+        state += "（仅证据核对，不等于工程批准）"
+    return state, "；".join(dict.fromkeys(reviewers)), " | ".join(dict.fromkeys(notes + evidence)) or "无审核说明/证据"
+
 def _style_sheet(ws, headers: list[str]) -> None:
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
@@ -233,7 +257,7 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
         ("功能归属", "优先使用 pins[].function_owner 或 function_owner_as_drawn 的显式值；缺省时才按器件类别推导。此字段不代表已证明软件运行时的数据流。"),
         ("PIN信号清单", "每个 pins 数组记录生成一行；器件/网络信息按 component_ref 和 net_id 关联。"),
         ("证据与置信度", "请填入原理图页码、位号、引脚、数据手册版本/页码及来源。空白字段表示输入数据没有提供，不会自动补造。"),
-        ("手册身份核对", "可选读取 components[].chip_identity_review；报告中的型号/封装/修订候选仅用于核对，即使字符串一致也不自动批准。"),
+        ("手册身份核对", "可选读取 components[].chip_identity_review；报告中的型号/封装/修订候选仅用于核对，即使字符串一致也不自动批准。"),\n        ("人工 PIN 审核", "human_review 来自独立审核台账。candidate/verified/conflict/rejected 表示证据审阅状态；verified 不代表工程签核或功能安全批准。缺少审核记录时默认为 candidate。"),
         ("示例数据", "示例硬件清单为占位数据，导出结果不可当作真实 ECU 引脚表。"),
         ("限制", "Excel 导出只整理已有 JSON 数据，不执行 OCR、原理图识图、电气连通性重建或 AUTOSAR 语义验证。")
     ]
