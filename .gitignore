@@ -2,7 +2,7 @@
 engineering/inputs/
 engineering/extracted/
 engineering/reports/
-engineering/traceability/source_hits.json
+engineering/traceability/
 __pycache__/
 *.py[cod]
 .venv/
