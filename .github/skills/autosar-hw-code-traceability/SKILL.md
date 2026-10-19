@@ -15,6 +15,20 @@ This file is an Agent Skill: it provides workflow instructions. It is **not** an
 - If a required script cannot be executed, provide the exact command for the user to run and clearly mark the analysis as incomplete.
 - Do not assume that an MCP server has access to local PDFs just because a file path was mentioned. Confirm the tool's workspace boundary and permissions first.
 
+## Circuit schematic analysis handoff
+
+For physical circuit interpretation, use the independent [circuit-schematic-analysis Skill](../circuit-schematic-analysis/SKILL.md) first when schematic PDFs/images, connector tables, BOMs or native netlists are present. This Skill owns component/pin/net/cross-sheet evidence. Do not treat extracted PDF text alone as a connectivity graph.
+
+Handoff contract:
+- Carry forward only observed or source-corroborated component, net and MCU-pin facts.
+- Preserve document revision, page/sheet, component reference, pin number, exact net label, evidence and confidence.
+- Mark visual guesses and OCR-only readings as candidates; unresolved cross-sheet links remain unresolved.
+- Then continue this Skill's hardware-to-code chain from confirmed MCU pin/peripheral into ECUC/ARXML, MCAL/BSW/IoHwAb, RTE/SWC and verification.
+- Keep physical connectivity, software naming and ARXML reference matching as separate evidence edges.
+- If no image viewer/native netlist is available, report schematic connectivity analysis as incomplete and request a suitable export rather than infer connections.
+
+Recommended prompt: "Use circuit-schematic-analysis to inventory the schematic and resolve page/net/pin evidence first. Then use autosar-hw-code-traceability to trace only supported signals into ARXML and C/C++ code. Report unknowns and do not edit files."
+
 ## Mission
 Build an evidence-backed chain:
 requirement -> schematic component/net/pin -> MCU peripheral -> ECUC/ARXML configuration -> MCAL/BSW/IoHwAb -> RTE/SWC -> observable behavior -> verification.
