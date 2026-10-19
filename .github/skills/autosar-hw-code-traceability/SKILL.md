@@ -45,6 +45,13 @@ requirement -> schematic component/net/pin -> MCU peripheral -> ECUC/ARXML confi
 - Do not upload proprietary documents or customer source to external services without authorization.
 - A successful host test is not proof of ECU electrical correctness, vehicle behavior or functional-safety compliance.
 
+## PIN signal Excel output
+
+When a hardware inventory JSON is available and the user asks for an Excel pin list, use the shared exporter:
+`python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py path/to/hardware_inventory.json --out engineering/reports/pin_signal_inventory.xlsx`
+
+The workbook separates PIN signals, component inventory and cross-sheet nets. Preserve the device class and whether the pin/function belongs to the MCU, an I/O expander or another chip. The exporter formats the evidence already present; it does not infer missing pinouts or verify circuit connectivity. If device type or part number is unknown, leave it unknown and mark it for review.
+
 ## Workflow
 
 ### 0. Establish baseline
