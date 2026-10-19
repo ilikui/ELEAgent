@@ -44,6 +44,8 @@ The configured ELEAGENT_WORKSPACE is the root that tools may access. Paths must 
 | normalize_chip_manual_tables | Relative candidate-table JSON and optional output path | Header-mapped candidate records with raw rows, page provenance and review status |
 | review_chip_identity | Relative analysis JSON, optional BOM/device manifest JSON and output path | Label-matched part/package/revision candidates, BOM comparison, source hashes and unresolved review gaps; never auto-approves a match |
 | merge_chip_identity_review | Relative inventory JSON, identity review JSON and output path | Adds identity review evidence to matching component refs without overwriting source fields |
+| review_pin_inventory | Relative inventory JSON, review ledger JSON and output path | Applies candidate/verified/conflict/rejected evidence review states to component-ref + pin-number pairs |
+| build_hardware_code_trace | Relative inventory, optional ARXML index/source-hit JSON and output path | Exact-name candidate graph, layer tags and explicit traceability gaps |
 | analyze_arxml | Relative ARXML file/directory and output path | Candidate references and resolution hints |
 | scan_source | Relative source directory and comma-separated terms | Search hits with file/line evidence |
 | check_traceability | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
@@ -65,6 +67,8 @@ Example MCP prompt:
 - Device ordering code, package, controlled revision and errata applicability must be checked before applying a family manual to a project.
 - ARXML analysis is heuristic and does not replace release-specific XSD or vendor configurator validation.
 - Source search results are textual matches, not proof of call/data flow or hardware connectivity.
+- PIN ledger verified requires reviewer/date/evidence; conflict/rejected require a note. Multiple entries for one pin are surfaced as conflict. Verified is not engineering approval.
+- The hardware-code graph matches normalized exact names only. It cannot validate ECUC semantics or prove MCAL/IoHwAb/RTE/SWC runtime flow; review every candidate edge.
 
 ## Tests
 
