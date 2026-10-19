@@ -17,7 +17,7 @@ From the ELEAgent repository directory:
 python -m pip install -r requirements.txt
 ```
 
-The dependencies include the MCP Python SDK and PyMuPDF for PDF extraction/rendering.
+The dependencies include the MCP Python SDK, PyMuPDF for PDF extraction/rendering, and openpyxl for Excel output.
 
 ## 3. Configuration included in this repository
 
@@ -76,7 +76,7 @@ Do not copy the example paths literally.
 5. Run **MCP: List Servers** in the Command Palette. Select `eleagent` to inspect/restart it or view output.
 6. Call `get_workspace_info` and verify the reported workspace path before analyzing project data.
 
-If it fails to start, check that `python -m pip show mcp pymupdf` reports both dependencies in the same Python environment used by VS Code, and inspect the server output. The server communicates over stdio, so do not add diagnostic prints to stdout; use stderr for temporary debugging.
+If it fails to start, check that `python -m pip show mcp pymupdf openpyxl` reports both dependencies in the same Python environment used by VS Code, and inspect the server output. The server communicates over stdio, so do not add diagnostic prints to stdout; use stderr for temporary debugging.
 
 ## 5. Tools exposed
 
@@ -88,6 +88,7 @@ If it fails to start, check that `python -m pip show mcp pymupdf` reports both d
 | `scan_source` | Relative source directory and comma-separated terms | Search hits with file/line evidence |
 | `check_traceability` | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
 | `build_review_report` | Relative traceability JSON and output path | Human-review Markdown report |
+| `export_pin_excel` | Relative hardware inventory JSON and optional .xlsx output path | Multi-sheet Excel PIN/signal workbook; classifies MCU and I/O expander pins |
 
 ### Example prompts
 
