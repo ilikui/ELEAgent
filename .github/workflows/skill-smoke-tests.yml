@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/skills/autosar-hw-code-traceability/**"
       - ".github/skills/circuit-schematic-analysis/**"
+      - ".github/skills/chip-datasheet-analysis/**"
       - "mcp_server.py"
       - "tests/**"
       - "schemas/**"
@@ -16,6 +17,7 @@ on:
     paths:
       - ".github/skills/autosar-hw-code-traceability/**"
       - ".github/skills/circuit-schematic-analysis/**"
+      - ".github/skills/chip-datasheet-analysis/**"
       - "mcp_server.py"
       - "tests/**"
       - "schemas/**"
@@ -36,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Compile Python scripts
-        run: python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts .github/skills/circuit-schematic-analysis tests mcp_server.py
+        run: python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts .github/skills/circuit-schematic-analysis .github/skills/chip-datasheet-analysis tests mcp_server.py
       - name: Run smoke tests
         run: python -m unittest discover -s tests -v
       - name: Validate example traceability structure
