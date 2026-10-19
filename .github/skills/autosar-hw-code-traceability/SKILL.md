@@ -52,6 +52,28 @@ When a hardware inventory JSON is available and the user asks for an Excel pin l
 
 The workbook separates PIN signals, component inventory and cross-sheet nets. Preserve the device class and whether the pin/function belongs to the MCU, an I/O expander or another chip. The exporter formats the evidence already present; it does not infer missing pinouts or verify circuit connectivity. If device type or part number is unknown, leave it unknown and mark it for review.
 
+## Human PIN review ledger
+
+Use review_pin_inventory.py to apply a separate JSON ledger to a hardware inventory. Each entry keys on component_ref + pin_number and supports candidate, verified, conflict or rejected. A verified entry must include reviewer, reviewed_at and evidence; conflict/rejected must include a note. Original pin fields and extracted evidence are never overwritten. Multiple entries for one pin are surfaced as conflict until reconciled. Pins without ledger entries default to candidate/unreviewed in Excel. Verified means the cited evidence was reviewed, not engineering approval, safety approval or authorization to change implementation.
+
+Example ledger:
+
+```json
+{
+  "schema_version": "1.0",
+  "reviews": [{
+    "component_ref": "U1", "pin_number": "12", "state": "verified",
+    "reviewer": "reviewer-id", "reviewed_at": "2026-10-19",
+    "note": "Checked against controlled schematic revision",
+    "evidence": [{"document": "schematic.pdf", "revision": "A", "page": 4, "observation": "Pin and net labels directly visible"}]
+  }]
+}
+```
+
+## Schematic-net to software trace graph
+
+Run build_hardware_code_trace.py with the inventory and optional outputs from analyze_arxml.py and scan_source.py. It creates net-to-pin edges and exact-normalized-name ARXML/source candidates. Candidate ARXML records are tagged by likely ECUC, MCAL, IoHwAb, RTE or SWC naming. Findings flag nets without pin records, ARXML candidates or source candidates. Run check_traceability.py and build_review_report.py on the graph JSON to surface dangling edges and missing evidence. Exact-name matches and layer tags are navigation hints only; manually validate controlled ARXML release, configuration semantics, source call/data flow and verification evidence.
+
 ## Workflow
 
 ### 0. Establish baseline
