@@ -22,6 +22,22 @@ class HardwareCodeTraceTests(unittest.TestCase):
         self.assertTrue(any(n.get("candidate_layer_tags") == ["ECUC"] for n in graph["nodes"] if n["type"] == "arxml_candidate"))
         self.assertTrue(graph["human_confirmation_required"])
 
+    def test_identity_conflict_and_missing_pin_evidence_are_flagged(self):
+        inventory = {
+            "components": [{
+                "ref":"U9", "part_number":"BOM-PN", "package":"LQFP",
+                "chip_identity_review":{"checks":[{"part_number":{"status":"candidate_mismatch_review_required"}}]}
+            }],
+            "pins":[{"component_ref":"U9","pin_number":"3","net_id":"N9","signal_name":"RESET_N"}],
+            "nets":[{"net_id":"N9","name_as_drawn":"RESET_N","review_state":"conflict"}]
+        }
+        graph = MODULE.build_graph(inventory)
+        gaps = {finding["gap"] for finding in graph["findings"]}
+        self.assertIn("chip_identity_mismatch_or_conflict", gaps)
+        self.assertIn("pin_mapping_missing_evidence", gaps)
+        self.assertIn("net_connectivity_conflict", gaps)
+        self.assertTrue(any(edge["relation"] == "component_has_pin" for edge in graph["edges"]))
+
     def test_missing_arxml_and_source_are_explicit_gaps(self):
         graph = MODULE.build_graph({"components":[],"pins":[],"nets":[{"net_id":"N2","name_as_drawn":"UNKNOWN_NET"}]})
         gaps = {item["gap"] for item in graph["findings"]}
