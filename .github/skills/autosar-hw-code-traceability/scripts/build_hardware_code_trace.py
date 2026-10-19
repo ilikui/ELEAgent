@@ -98,8 +98,12 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
         src_matches = []
         for hit in source_hits:
             if not isinstance(hit, dict): continue
-            searchable = [hit.get("term"), hit.get("matched_text"), hit.get("symbol"), hit.get("line_text"), hit.get("path")]
-            if any(norm(v) in token_set for v in searchable if v):
+            searchable = [hit.get("term"), hit.get("matched_text"), hit.get("symbol"),
+                          hit.get("line_text"), hit.get("path"), hit.get("file"), hit.get("text")]
+            terms = hit.get("terms", [])
+            if isinstance(terms, list):
+                searchable.extend(terms)
+            if any(norm(v) in token_set for v in searchable if isinstance(v, (str, int, float)) and norm(v)):
                 src_matches.append(hit)
         if not src_matches:
             findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "traceability_gap",
