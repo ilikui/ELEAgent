@@ -55,6 +55,8 @@ jobs:
           python .github/skills/autosar-hw-code-traceability/scripts/extract_chip_tables.py /tmp/chip_manual_sample.pdf --out /tmp/chip_manual_tables.json
       - name: Test chip table normalization
         run: python -m unittest discover -s tests -p "test_normalize_chip_tables.py" -v
+      - name: Test chip identity review
+        run: python -m unittest discover -s tests -p "test_review_chip_identity.py" -v
       - name: Export example PIN inventory to Excel
         run: python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
       - name: Generate review report from example
