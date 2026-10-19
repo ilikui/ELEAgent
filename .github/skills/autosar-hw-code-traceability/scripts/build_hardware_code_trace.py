@@ -78,11 +78,17 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
         nodes.append({"id": nid, "type": "schematic_net", "net_id": net_id or None,
                       "name_as_drawn": net.get("name_as_drawn"), "normalized_name": net.get("normalized_name"),
                       "review_state": net.get("review_state", "unknown"), "evidence": net.get("evidence", [])})
-        if str(net.get("review_state", "")).casefold() in {"conflict", "ambiguous", "needs_review", "needs_human_review"}:
+        net_review_state = str(net.get("review_state", "")).casefold()
+        if net_review_state in {"conflict", "ambiguous"}:
             findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "configuration_conflict",
                              "severity": "warning", "net_id": net_id, "signal": net_name,
-                             "gap": "net_connectivity_not_confirmed", "review_state": net.get("review_state"),
+                             "gap": "net_connectivity_conflict", "review_state": net.get("review_state"),
                              "next_step": "Resolve cross-sheet/net-label conflicts against the controlled schematic or native netlist."})
+        elif net_review_state in {"needs_review", "needs_human_review", "unverified"}:
+            findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
+                             "severity": "warning", "net_id": net_id, "signal": net_name,
+                             "gap": "net_connectivity_not_confirmed", "review_state": net.get("review_state"),
+                             "next_step": "Review the schematic net and cross-sheet endpoints; do not treat the net mapping as confirmed."})
         matched_pins = pins_by_net.get(net_id, [])
         if not matched_pins:
             findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
