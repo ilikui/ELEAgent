@@ -11,17 +11,31 @@
 python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/to/schematic.pdf --out engineering/extracted/pdf_text --render
 ```
 
+## Inventory and analyze ARXML
+```bash
+python .github/skills/autosar-hw-code-traceability/scripts/inventory_arxml.py path/to/arxml --out engineering/traceability/arxml_inventory.json
+python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
+```
+The analyzer attempts heuristic cross-file reference matching. It is not a replacement for release-specific XSD validation or the vendor ECUC/configuration validator.
+
 ## Search source and configuration
 ```bash
 python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET_NAME,Dio_WriteChannel,Rte_Read,Adc_ReadGroup" --out engineering/traceability/source_hits.json
 ```
 
-## Validate reviewed traceability JSON
+## Validate and create a review report
 ```bash
-python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py engineering/traceability/traceability.json
+python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
+python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py examples/traceability.example.json --out engineering/reports/review_report.md
+```
+The example contains deliberately unknown placeholders. Replace it with evidence-backed records for your project before using the report for engineering decisions.
+
+## Run tests
+```bash
+python -m unittest discover -s tests -v
 ```
 
-Replace all example paths and identifiers with actual project values. Do not put confidential PDFs or customer source into a public repository. Add generated extraction output to .gitignore according to your data-governance rules.
+Replace example paths and identifiers with actual project values. Do not put confidential PDFs or customer source into a public repository. Add generated extraction output to .gitignore according to your data-governance rules.
 
 ## Recommended first pilot
 Choose one contained function, such as a GPIO indicator or ADC input. Confirm one end-to-end chain from schematic page to chip pin specification, ECUC/ARXML, MCAL/IoHwAb/SWC implementation and a test. Record unknowns instead of guessing.
