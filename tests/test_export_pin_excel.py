@@ -81,6 +81,40 @@ class PinExcelExportTests(unittest.TestCase):
             finally:
                 workbook.close()
 
+    def test_exports_chip_identity_review_without_auto_approval(self):
+        inventory = {
+            "components": [{
+                "ref": "U1", "device_type": "MCU", "part_number": "BOM-PN",
+                "chip_identity_review": {
+                    "decision": "unconfirmed", "human_confirmation_required": True,
+                    "checks": [{"part_number": {
+                        "manifest_value": "BOM-PN",
+                        "manual_candidates": [{"value": "MANUAL-PN", "pdf_page": 3, "evidence_excerpt": "Ordering Part Number: MANUAL-PN"}],
+                        "status": "candidate_mismatch_review_required"
+                    }}],
+                    "review_gaps": [{"field": "package", "reason": "No manual candidate found"}]
+                }
+            }],
+            "pins": [], "nets": []
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, output = root / "inventory.json", root / "out.xlsx"
+            source.write_text(json.dumps(inventory), encoding="utf-8")
+            result = subprocess.run([sys.executable, str(SCRIPT), str(source), "--out", str(output)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            workbook = load_workbook(output, read_only=True, data_only=True)
+            try:
+                ws = workbook["器件清单"]
+                headers = [cell.value for cell in ws[1]]
+                row = [cell.value for cell in ws[2]]
+                self.assertIn("未确认；人工复核必需", row[headers.index("手册身份核对状态")])
+                self.assertIn("手册型号=MANUAL-PN (PDF p.3)", row[headers.index("手册候选型号/封装/修订")])
+                self.assertIn("缺口:package", row[headers.index("身份核对证据")])
+                self.assertEqual(row[headers.index("器件型号/料号")], "BOM-PN")
+            finally:
+                workbook.close()
+
     def test_rejects_invalid_inventory_arrays(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
