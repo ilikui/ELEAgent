@@ -68,7 +68,7 @@ def run_script(script_name: str, args: Sequence[str], timeout: int = 120) -> str
         "stdout": output[-12000:],
         "stderr": errors[-6000:],
         "workspace": str(workspace_root()),
-        "note": "Text matches and heuristic ARXML results are evidence-discovery aids, not proof of hardware behavior or AUTOSAR semantic validity.",
+        "note": "Text matches and heuristic analysis are evidence-discovery aids, not proof of hardware behavior or AUTOSAR semantic validity.",
     }
     return json.dumps(result, ensure_ascii=False, indent=2)
 
@@ -91,6 +91,29 @@ def extract_pdf(pdf_path: str, render_pages: bool = False, min_chars: int = 40) 
     if render_pages:
         args.append("--render")
     return run_script("extract_pdf.py", args, timeout=180)
+
+
+@mcp.tool()
+def analyze_chip_manual(
+    pdf_path: str,
+    output_path: str = "engineering/chip_manual/chip_manual_analysis.json",
+    min_chars: int = 80,
+) -> str:
+    """Index a chip datasheet/reference manual by page and technical topic.
+
+    Produces a page-cited searchable JSON index with topic hits, document SHA-256,
+    evidence snippets and review gaps. It does not guarantee table parsing or infer
+    electrical limits, pin assignments or register values.
+    """
+    pdf = safe_path(pdf_path, want_dir=False)
+    if pdf.suffix.lower() != ".pdf":
+        raise ValueError("pdf_path must point to a .pdf file.")
+    if min_chars < 0 or min_chars > 100000:
+        raise ValueError("min_chars must be between 0 and 100000.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    return run_script("analyze_chip_manual.py", [str(pdf), "--out", str(output), "--min-chars", str(min_chars)], timeout=300)
 
 
 @mcp.tool()
@@ -160,7 +183,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
