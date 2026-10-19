@@ -27,17 +27,18 @@ requirement -> schematic component/net/pin -> MCU peripheral -> ECUC/ARXML confi
 Inventory the project root, Git branch/commit/status, documents, source, ARXML, configuration, generated output, build instructions and tests. Record toolchain versions and baseline results where available. Do not clean or reset the worktree.
 
 ### 1. Parse PDF documents
-Extract selectable text page-by-page and preserve page boundaries. Record file hash, metadata, page count and revision if discoverable. Flag low-text pages for OCR/visual review; do not assume every such page is scanned. Inspect page images for symbols, junctions, cross-sheet nets, pin numbers and polarity. OCR is a candidate transcription, never ground truth.
-Record the exact chip ordering code/package, document revision, page and section. Cross-check datasheet, reference manual and errata.
+Run extract_pdf.py on each relevant PDF. Preserve page boundaries, SHA-256, metadata and page count. Low-text pages are review candidates, not automatically scanned pages. Inspect page images for symbols, junctions, cross-sheet nets, pin numbers and polarity. OCR is tentative transcription, never ground truth.
+Record exact chip ordering code/package, document revision, page and section. Cross-check datasheet, reference manual and errata.
 
 ### 2. Build hardware inventory
 Identify components, MCU pins, net labels, connectors, power/reset/clock circuits, peripheral signals, external drivers, pull resistors, dividers, filters and protection circuits. Trace active polarity through the complete external circuit. Do not infer connectivity from proximity or signal names. Mark unresolved or ambiguous connections as needing human review.
 
 ### 3. Analyze AUTOSAR artifacts
-Inventory ARXML namespaces/schema versions and configuration variants. Extract relevant SWC ports/interfaces/data elements/runnables/mappings and ECUC module/container/parameter values where present. Trace Com/PduR/CanIf/driver, DIO/ADC/PWM and IoHwAb paths only where project artifacts support them. Record file paths, XPath, short names, references and variant conditions. Text search is discovery, not proof that references resolve or configuration is valid.
+Run inventory_arxml.py for a quick element inventory and analyze_arxml.py for candidate cross-file references. The latter indexes SHORT-NAME paths and reference text; its resolution status is heuristic and not proof of AUTOSAR validity. Record ARXML file, namespace, source element and reference. Validate against the correct release XSD and the vendor configurator/validator when available. Do not treat XML well-formedness or heuristic reference matching as ECUC semantic validation.
+Trace SWC ports/interfaces/data elements/runnables/mappings and ECUC module/container/parameter values only when the artifacts support it. Trace Com/PduR/CanIf/driver, DIO/ADC/PWM and IoHwAb paths only when evidenced.
 
 ### 4. Trace source code
-Search maintained source and configuration for net names, pin names, peripheral instances, APIs, RTE symbols, runnable names, callbacks, state transitions and tests. Identify call/data flow where possible. Label simple text hits as hints, not proven relationships. Check initialization order, safe startup state, polarity, data scaling, timeout/fault behavior, task periods, concurrency and error handling against explicit requirements.
+Run scan_source.py with terms taken from confirmed hardware/configuration evidence. Text matches are discovery hints only. Inspect callers/callees, data flow, initialization, generated-code markers and tests manually or with project-aware tooling. Check startup state, polarity, scaling, timeout/fault behavior, task periods, concurrency and error handling against explicit requirements.
 
 ### 5. Create traceability records
 For each function/signal, connect as much evidence as available:
@@ -48,16 +49,27 @@ For each function/signal, connect as much evidence as available:
 - MCAL/BSW/IoHwAb implementation
 - RTE/SWC runnable, port and data element
 - test, measurement point and acceptance criterion
-Every missing link must be explicit.
+Every missing link must be explicit. Use examples/traceability.example.json as a shape example only; never copy example facts into a real project.
 
 ### 6. Report findings
-Each finding includes stable ID, severity, category, confidence, expected behavior and its evidence, actual implementation and location, gap/impact, assumptions, minimal proposed change, verification plan and open questions. If requirements or hardware facts are missing, do not call the behavior a confirmed defect.
+Use check_traceability.py to check record shape and build_review_report.py to render a human-review report. These scripts do not establish truth. Each finding includes stable ID, severity, category, confidence, expected behavior and evidence, actual implementation and location, gap/impact, assumptions, minimal proposed change, verification plan and open questions. If requirements or hardware facts are missing, do not call behavior a confirmed defect.
 
 ### 7. Approval gate
 Present a proposed change plan listing exact files, rationale, risk, generated-code implications, tests and rollback considerations. Wait for explicit user approval. Approval to analyze is not approval to edit. After approval, apply only agreed changes, inspect the full diff and preserve unrelated changes.
 
 ### 8. Verify
 Run only documented or explicitly supplied commands. Record exact command, working directory, exit code, toolchain/version and log path. Report tests/builds not run and why. Mark oscilloscope, bench, CANoe, HIL and vehicle checks NOT RUN unless actually performed.
+
+## Tool commands
+```bash
+python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/to/schematic.pdf --out engineering/extracted/pdf_text --render
+python .github/skills/autosar-hw-code-traceability/scripts/inventory_arxml.py path/to/arxml --out engineering/traceability/arxml_inventory.json
+python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
+python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read" --out engineering/traceability/source_hits.json
+python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
+python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py examples/traceability.example.json --out engineering/reports/review_report.md
+python -m unittest discover -s tests -v
+```
 
 ## Deliverables
 - inventory.md: input documents, revisions, source/build inventory and limitations
