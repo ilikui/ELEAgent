@@ -18,7 +18,7 @@ PIN_HEADERS = [
     "器件型号/料号", "封装", "引脚号", "引脚名称（原图）", "引脚功能/复用功能",
     "功能归属（MCU/扩展芯片/其他）", "信号方向", "电气域/电压",
     "连接对象/端点", "原理图页码", "原理图页/Sheet", "数据手册引用",
-    "证据说明", "置信度", "审核状态"
+    "证据说明", "置信度", "审核状态", "人工审核状态", "审核人/时间", "审核备注/证据"
 ]
 COMPONENT_HEADERS = [
     "器件位号", "器件类别", "器件型号/料号", "封装", "参数/数值",
@@ -257,7 +257,8 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
         ("功能归属", "优先使用 pins[].function_owner 或 function_owner_as_drawn 的显式值；缺省时才按器件类别推导。此字段不代表已证明软件运行时的数据流。"),
         ("PIN信号清单", "每个 pins 数组记录生成一行；器件/网络信息按 component_ref 和 net_id 关联。"),
         ("证据与置信度", "请填入原理图页码、位号、引脚、数据手册版本/页码及来源。空白字段表示输入数据没有提供，不会自动补造。"),
-        ("手册身份核对", "可选读取 components[].chip_identity_review；报告中的型号/封装/修订候选仅用于核对，即使字符串一致也不自动批准。"),\n        ("人工 PIN 审核", "human_review 来自独立审核台账。candidate/verified/conflict/rejected 表示证据审阅状态；verified 不代表工程签核或功能安全批准。缺少审核记录时默认为 candidate。"),
+        ("手册身份核对", "可选读取 components[].chip_identity_review；报告中的型号/封装/修订候选仅用于核对，即使字符串一致也不自动批准。"),
+        ("人工 PIN 审核", "human_review 来自独立审核台账。candidate/verified/conflict/rejected 表示证据审阅状态；verified 不代表工程签核或功能安全批准。缺少审核记录时默认为 candidate。"),
         ("示例数据", "示例硬件清单为占位数据，导出结果不可当作真实 ECU 引脚表。"),
         ("限制", "Excel 导出只整理已有 JSON 数据，不执行 OCR、原理图识图、电气连通性重建或 AUTOSAR 语义验证。")
     ]
