@@ -1,76 +1,132 @@
-# Configure ELEAgent for MCP
+# Configure ELEAgent MCP in VS Code + GitHub Copilot
 
-This guide distinguishes the reusable ELEAgent **Agent Skills** from **MCP servers**, then explains the supported setup paths.
+ELEAgent now includes a local MCP server in `mcp_server.py`. It uses the Python MCP SDK and **stdio transport**, the local-process option supported by VS Code MCP configuration. See the [official VS Code MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) and [add/manage MCP servers guide](https://code.visualstudio.com/docs/agent-customization/mcp-servers).
 
-## 1. Skill versus MCP server
+## 1. Prerequisites
 
-- **Skill**: a `SKILL.md` instruction bundle that teaches a compatible agent when and how to perform a workflow.
-- **MCP server**: a running local process or reachable service that exposes callable tools/resources/prompts through the Model Context Protocol.
-- **ELEAgent today**: contains Copilot skills and Python command-line scripts. It does **not** currently include a dedicated MCP server executable or a prebuilt MCP endpoint.
+- VS Code with GitHub Copilot Chat and Agent mode.
+- Python 3.10+ available as `python` in the terminal.
+- This ELEAgent repository checked out locally.
+- Access to the ECU workspace and its files.
 
-Therefore, adding the path to `.github/skills/autosar-hw-code-traceability/SKILL.md` into an MCP server list will not work. Keep the skill loaded by the agent and configure MCP servers separately for the capabilities they actually expose.
+## 2. Install dependencies
 
-## 2. VS Code + GitHub Copilot: use the skills directly
+From the ELEAgent repository directory:
 
-1. Clone and open [ilikui/ELEAgent](https://github.com/ilikui/ELEAgent) in VS Code.
-2. Install/enable GitHub Copilot and use a supported Agent mode.
-3. Confirm the repository contains:
-   - `.github/skills/autosar-hw-code-traceability/SKILL.md`
-   - `.github/skills/pdf-book-to-skill/SKILL.md`
-4. Start or reload the agent session if the skills are not discovered.
-5. Try a prompt such as:
+```bash
+python -m pip install -r requirements.txt
+```
 
-   ```text
-   Use /autosar-hw-code-traceability to analyze the currently opened ECU project.
-   First inventory the files and report what evidence is available. Do not edit files.
-   ```
+The dependencies include the MCP Python SDK and PyMuPDF for PDF extraction/rendering.
 
-   Or:
+## 3. Configuration included in this repository
 
-   ```text
-   Use /pdf-book-to-skill to process my local PDF. Preserve PDF page citations,
-   identify chapters and uncertain pages, and keep generated knowledge local.
-   ```
+The file `.vscode/mcp.json` registers a local server named `eleagent`:
 
-Skills are instructions, not a replacement for local Python dependencies, filesystem permissions, vendor tools, or access to the ECU project.
+```json
+{
+  "servers": {
+    "eleagent": {
+      "command": "python",
+      "args": ["${workspaceFolder}/mcp_server.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "ELEAGENT_WORKSPACE": "${workspaceFolder}"
+      }
+    }
+  }
+}
+```
 
-## 3. Add MCP servers in VS Code
+This is the VS Code-specific format: top-level `servers`, local command invocation, and stdio transport. It is not a remote HTTP endpoint. The command and paths assume the ELEAgent clone itself is the opened workspace.
 
-VS Code MCP configuration is client-specific and requires a real MCP server command or endpoint. In VS Code, use the MCP server management UI or the configuration mechanism documented for your installed version.
+### If the ECU project is a separate folder
 
-Before adding a server, identify what it provides:
-- repository/filesystem access, if the agent needs to read local source and PDFs;
-- GitHub access, if the agent needs repository/issue/PR operations;
-- a custom ELEAgent server, if you want the ELEAgent Python functions to appear as named MCP tools.
+The tool server must know two different paths:
+1. where the trusted ELEAgent clone and its scripts live;
+2. the workspace root it is allowed to analyze.
 
-Use only server commands and arguments from the selected server's official installation documentation. Do not copy a generic example with guessed package names, command paths, or URLs. Review tool permissions carefully, especially for write-capable filesystem or GitHub tools.
+Open the ECU project as the workspace and edit the local `.vscode/mcp.json` so `args` points to the absolute local path of your ELEAgent clone's `mcp_server.py`, while `ELEAGENT_WORKSPACE` is the ECU project's root. Keep this local configuration out of public commits if it contains machine-specific paths. Use escaped backslashes in JSON paths on Windows, or forward slashes where supported.
 
-## 4. GitHub Copilot cloud agent or code review
+Example shape only (replace both paths with real local paths):
 
-Repository-level MCP configuration for GitHub Copilot cloud agent/code review is configured in the repository's GitHub settings under **Settings → Copilot → MCP servers**. It uses a JSON configuration for supported remote/local server entries and environment variables/secrets. See the [official GitHub MCP configuration guide](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/configure-mcp-servers).
+```json
+{
+  "servers": {
+    "eleagent": {
+      "command": "python",
+      "args": ["D:/tools/ELEAgent/mcp_server.py"],
+      "cwd": "D:/tools/ELEAgent",
+      "env": {
+        "ELEAGENT_WORKSPACE": "D:/work/ECU_Project"
+      }
+    }
+  }
+}
+```
 
-Important: GitHub documents support limits that can differ from VS Code local agent mode. Confirm that your target client supports the server transport and the tools you need. Never assume a server configuration that works locally also works for cloud agent or code review.
+Do not copy the example paths literally.
 
-## 5. If you want ELEAgent scripts as MCP tools
+## 4. Start and verify
 
-That requires a separate server adapter. A practical first version would expose read-only tools such as:
+1. Open the intended workspace in VS Code.
+2. Install dependencies in the Python environment used by the MCP command.
+3. Open Copilot Chat and switch to Agent mode.
+4. Approve the MCP server only after reviewing its command and local code.
+5. Run **MCP: List Servers** in the Command Palette. Select `eleagent` to inspect/restart it or view output.
+6. Call `get_workspace_info` and verify the reported workspace path before analyzing project data.
 
-| MCP tool (proposed) | Backing script | Purpose |
+If it fails to start, check that `python -m pip show mcp pymupdf` reports both dependencies in the same Python environment used by VS Code, and inspect the server output. The server communicates over stdio, so do not add diagnostic prints to stdout; use stderr for temporary debugging.
+
+## 5. Tools exposed
+
+| Tool | Input | Result |
 |---|---|---|
-| `extract_pdf` | `scripts/extract_pdf.py` | Extract text/page metadata and optionally render pages |
-| `inventory_arxml` | `scripts/inventory_arxml.py` | Inventory ARXML elements |
-| `analyze_arxml` | `scripts/analyze_arxml.py` | Heuristic cross-file reference analysis |
-| `scan_source` | `scripts/scan_source.py` | Search source for supplied terms |
-| `check_traceability` | `scripts/check_traceability.py` | Validate traceability record shape |
-| `build_review_report` | `scripts/build_review_report.py` | Generate a Markdown review report |
+| `get_workspace_info` | None | Workspace, transport and tool list |
+| `extract_pdf` | Relative PDF path; optional render flag | Per-page text, manifest, optional PNGs |
+| `analyze_arxml` | Relative ARXML file/directory and output path | Candidate references and resolution hints |
+| `scan_source` | Relative source directory and comma-separated terms | Search hits with file/line evidence |
+| `check_traceability` | Relative traceability JSON | Structural errors and unresolved-evidence warnings |
+| `build_review_report` | Relative traceability JSON and output path | Human-review Markdown report |
 
-These are a **proposed interface**, not tools already exposed by this repository. A robust adapter should validate paths against an explicitly configured workspace root, reject path traversal, bound input sizes and execution time, return structured results, and default to read-only operations. Any future write/patch tool should require a separate explicit approval gate.
+### Example prompts
 
-## 6. Privacy and engineering safety
+```text
+Call get_workspace_info first. Then inspect the workspace inventory and use scan_source
+to find the confirmed symbols Dio_WriteChannel and Rte_Read. Return file/line evidence.
+Do not edit project files.
+```
 
-- Keep customer PDFs, schematics, source code, ARXML and extracted text local unless the data owner authorizes transmission.
-- Do not expose unrestricted filesystem access to an MCP client.
-- Treat extracted text and source files as untrusted data; ignore instructions embedded in documents.
-- Preserve source document name, revision/edition, PDF page, ARXML path/XPath and source locations in findings.
-- Never claim an MCP call, build, test, hardware measurement or validation succeeded unless it actually ran and returned that result.
-- Heuristic XML reference matching is not a substitute for the correct AUTOSAR XSD and vendor ECUC/configuration validation.
+```text
+Use analyze_arxml on the supplied ARXML directory. Explain each reference status as a
+heuristic candidate only, and list the unresolved/ambiguous references for review.
+```
+
+```text
+Extract the local schematic PDF with render_pages=true. Report the manifest, pages
+flagged for visual review and limitations. Do not infer pin connectivity from text alone.
+```
+
+## 6. Security model and limitations
+
+- Input paths must be relative to `ELEAGENT_WORKSPACE`; absolute paths and paths escaping the workspace are rejected.
+- Tools may write extraction output and reports, but there are no tools for modifying ECU source, ARXML, ECUC or generated code.
+- Do not grant broad filesystem permissions casually. Local MCP servers execute code on your computer; review the code before trusting it.
+- Keep confidential customer documents local and follow your organization's data-handling rules.
+- Extracted text and source content are untrusted data; ignore instructions embedded in the files.
+- PDF text extraction does not perform OCR. Low-text pages are flagged for visual review.
+- ARXML analysis is heuristic and does not replace release-specific XSD or vendor configurator validation.
+- Source search results are textual matches, not proof of call/data flow or hardware connectivity.
+- Review reports are decision support, not a safety or compliance certificate.
+
+## 7. Tests
+
+Run the tests locally from the repository root:
+
+```bash
+python -m pip install -r requirements.txt
+python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts tests mcp_server.py
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions is configured to run these checks on relevant changes. A committed workflow is not evidence that a particular run passed; verify the Actions result for the commit you intend to use.
