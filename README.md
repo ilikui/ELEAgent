@@ -2,7 +2,7 @@
 
 Evidence-driven engineering assistant for embedded and automotive ECU projects.
 
-ELEAgent combines reusable Agent Skills with a **working local MCP server** and Python tools for PDF extraction, ARXML reference discovery, C/C++ source search, traceability checks and review-report generation.
+ELEAgent combines reusable Agent Skills with a **local MCP server implementation** and Python tools for PDF extraction, ARXML reference discovery, C/C++ source search, traceability checks and review-report generation.
 
 > A `SKILL.md` is not an MCP server. The Skill provides the analysis workflow; `mcp_server.py` exposes callable tools over MCP stdio. Keep both enabled so Copilot has both domain instructions and tools.
 
