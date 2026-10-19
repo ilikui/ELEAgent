@@ -58,12 +58,12 @@ All input/output paths are restricted to `ELEAGENT_WORKSPACE`; absolute paths an
 
 | Skill | Use it for |
 |---|---|
-| [autosar-hw-code-traceability](.github/skills/autosar-hw-code-traceability/SKILL.md) | Evidence-based hardware-to-code tracing and review |
+| [circuit-schematic-analysis](.github/skills/circuit-schematic-analysis/SKILL.md) | Component, pin, net, cross-sheet and automotive ECU circuit analysis |\n| [autosar-hw-code-traceability](.github/skills/autosar-hw-code-traceability/SKILL.md) | Evidence-based hardware-to-code tracing and review |
 | [pdf-book-to-skill](.github/skills/pdf-book-to-skill/SKILL.md) | Convert technical PDFs into private, cited knowledge |
 
 Example prompts:
 
-- `Use /autosar-hw-code-traceability to analyze the opened ECU project. Use the MCP tools where available. Report evidence and unknowns; do not edit files.`
+- `Use /circuit-schematic-analysis to inspect the schematic PDF. Build component/pin/net evidence, check cross-sheet links, and list uncertainties; do not edit files.`\n- `Use /circuit-schematic-analysis first, then /autosar-hw-code-traceability to trace evidenced MCU signals through ARXML and C/C++ source. Report evidence gaps; do not edit files.`\n- `Use /autosar-hw-code-traceability to analyze the opened ECU project. Use the MCP tools where available. Report evidence and unknowns; do not edit files.`
 - `Use /pdf-book-to-skill to outline this local PDF, preserve page citations and keep generated knowledge private.`
 
 ## Run locally without MCP
