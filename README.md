@@ -14,7 +14,7 @@ ELEAgent combines reusable Agent Skills with a **local MCP server implementation
 - Compare label-matched manual identity candidates (part number, package, document revision and silicon revision) with an optional BOM/device manifest; all matches remain unconfirmed.
 - Merge identity review results into matching hardware inventory components without overwriting BOM/source fields, then carry the review status and page evidence into the Excel component sheet.
 - Apply a separate auditable PIN review ledger (candidate/verified/conflict/rejected); verified means evidence reviewed, not engineering or functional-safety approval.
-- Build a conservative schematic-net → component-pin → ARXML/source candidate graph, tag likely ECUC/MCAL/IoHwAb/RTE/SWC layers, and report missing links.
+- Build a conservative schematic-net → component-pin → ARXML/source candidate graph, tag likely ECUC/MCAL/IoHwAb/RTE/SWC layers, and report missing links, chip identity conflicts, missing pin evidence and unresolved ARXML references.
 - Trace evidence from schematic PDFs and chip documentation to MCU pins, ECUC/ARXML, MCAL/BSW/IoHwAb, RTE/SWC and verification.
 - Extract selectable PDF text by page, record SHA-256 and flag low-text pages for visual review; optionally render pages.
 - Inventory ARXML references heuristically; not a substitute for release-specific XSD/vendor ECUC validation.
