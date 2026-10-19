@@ -50,7 +50,7 @@ Distinguish PDF viewer page numbers from printed page labels. Preserve physical 
 
 Depending on the request, produce a concise answer with source citations, chip_manual_analysis.json (document metadata, page index, topic hits, evidence snippets and review gaps), pin_function_matrix.json/Excel, register_reference.json, electrical_limits.json, or manual_review_checklist.md.
 
-Use the MCP tool analyze_chip_manual or its CLI helper to build a searchable page/topic index. Use extract_chip_manual_tables to extract candidate tables into raw rows with PDF page citations and topic hints. Treat detected tables as unreviewed candidates: table detection is heuristic, scanned-page OCR is not performed, and merged cells, footnotes and column alignment must be checked against the original rendered page. Neither tool is an autonomous design approval.
+Use the MCP tool analyze_chip_manual or its CLI helper to build a searchable page/topic index. Use extract_chip_manual_tables to extract candidate tables into raw rows with PDF page citations and topic hints, then use normalize_chip_manual_tables to map unambiguous headers into candidate pin/register/electrical records while retaining raw rows. Treat detected and normalized records as unreviewed candidates: table detection is heuristic, scanned-page OCR is not performed, and merged cells, footnotes and column alignment must be checked against the original rendered page. Neither tool is an autonomous design approval.
 
 ## Integration with other Skills
 
