@@ -20,7 +20,7 @@ def iter_arxml(root):
         return [root] if root.suffix.lower() == ".arxml" else []
     return sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() == ".arxml")
 
-def collect_paths(node, parent_path, file_name, elements, refs):
+def collect_paths(node, parent_path, file_name, elements, refs, xpath):
     short_name = direct_text(node, "SHORT-NAME")
     canonical = f"{parent_path}/{short_name}" if short_name else parent_path
     tag = lname(node.tag)
@@ -28,22 +28,29 @@ def collect_paths(node, parent_path, file_name, elements, refs):
         elements.append({
             "file": file_name, "tag": tag, "short_name": short_name,
             "canonical_path": canonical or None,
-            "definition_ref": direct_text(node, "DEFINITION-REF"),
-            "xpath_hint": None
+            "xpath": xpath,
+            "definition_ref": direct_text(node, "DEFINITION-REF")
         })
+    sibling_counts = {}
     for child in list(node):
         child_tag = lname(child.tag)
+        sibling_counts[child_tag] = sibling_counts.get(child_tag, 0) + 1
+        child_xpath = f"{xpath}/{child_tag}[{sibling_counts[child_tag]}]"
         if child.text and child.text.strip() and (child_tag.endswith("-REF") or child_tag.endswith("-TREF")):
             refs.append({
-                "file": file_name, "tag": child_tag,
+                "file": file_name, "tag": child_tag, "xpath": child_xpath,
                 "reference": child.text.strip(), "dest": child.attrib.get("DEST"),
                 "owner_tag": tag, "owner_short_name": short_name,
-                "owner_path": canonical or None
+                "owner_path": canonical or None, "owner_xpath": xpath
             })
+    sibling_counts = {}
     for child in list(node):
-        if lname(child.tag) == "SHORT-NAME":
+        child_tag = lname(child.tag)
+        sibling_counts[child_tag] = sibling_counts.get(child_tag, 0) + 1
+        if child_tag == "SHORT-NAME":
             continue
-        collect_paths(child, canonical, file_name, elements, refs)
+        child_xpath = f"{xpath}/{child_tag}[{sibling_counts[child_tag]}]"
+        collect_paths(child, canonical, file_name, elements, refs, child_xpath)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -66,7 +73,8 @@ def main():
             continue
         namespace = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else None
         namespaces.append({"file": file.as_posix(), "namespace": namespace})
-        collect_paths(root, "", file.as_posix(), elements, refs)
+        root_xpath = f"/{lname(root.tag)}[1]"
+        collect_paths(root, "", file.as_posix(), elements, refs, root_xpath)
 
     path_index = {}
     for item in elements:
@@ -78,16 +86,18 @@ def main():
         ref["resolution"] = "resolved_unique" if len(targets) == 1 else (
             "unresolved" if not targets else "ambiguous_multiple_targets")
         ref["target_candidates"] = [
-            {"file": target["file"], "tag": target["tag"], "short_name": target["short_name"]}
+            {"file": target["file"], "tag": target["tag"], "short_name": target["short_name"],
+             "xpath": target["xpath"]}
             for target in targets
         ]
 
     output = {
-        "schema_version": "1.0", "input": args.root.as_posix(),
+        "schema_version": "1.1", "input": args.root.as_posix(),
         "files": namespaces, "element_count": len(elements), "reference_count": len(refs),
         "elements": elements, "references": refs, "errors": errors,
         "limitations": [
             "Reference matching uses indexed SHORT-NAME paths and is heuristic; supplier-specific reference rules and variants may need normalization.",
+            "Generated XPath strings are namespace-agnostic location hints, not schema-aware identifiers; verify them against the original XML.",
             "No AUTOSAR XSD validation, ECUC semantic validation, variant resolution, or generator validation is performed.",
             "Canonical paths are candidate evidence and must be checked against source ARXML before being used in a safety-related finding."
         ]
