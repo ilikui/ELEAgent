@@ -11,7 +11,7 @@ ELEAgent combines reusable Agent Skills with a **local MCP server implementation
 - Analyze chip datasheets/reference manuals by device identity, pinout, mux, electrical limits, registers, timing, reset/clock/boot and errata; keep page-level evidence and review gaps.
 - Extract candidate pin, pin-mux, register, electrical-limit and timing tables into JSON while preserving raw cells, PDF page numbers and review flags.
 - Normalize recognized table headers into reviewable candidate pin/register/electrical records while retaining raw rows and page provenance.
-- Compare label-matched manual identity candidates (part number, package, document revision and silicon revision) with an optional BOM/device manifest; all matches remain unconfirmed.
+- Compare label-matched manual identity candidates (part number, package, document revision and silicon revision) with an optional BOM/device manifest; all matches remain unconfirmed.\n- Merge identity review results into matching hardware inventory components without overwriting BOM/source fields, then carry the review status and page evidence into the Excel component sheet.
 - Trace evidence from schematic PDFs and chip documentation to MCU pins, ECUC/ARXML, MCAL/BSW/IoHwAb, RTE/SWC and verification.
 - Extract selectable PDF text by page, record SHA-256 and flag low-text pages for visual review; optionally render pages.
 - Inventory ARXML references heuristically; not a substitute for release-specific XSD/vendor ECUC validation.
@@ -48,7 +48,7 @@ See [MCP setup and security guide](docs/mcp-setup.md).
 | analyze_chip_manual | Build a topic/page index of a chip manual, including document hash, snippets and review gaps | JSON report only |
 | extract_chip_manual_tables | Extract candidate tables with raw cells, PDF page, topic hints and review flags | JSON report only |
 | normalize_chip_manual_tables | Map recognized headers into candidate records while preserving raw rows, page citations and review status | JSON report only |
-| review_chip_identity | Compare manual identity candidates with an optional BOM/device manifest, preserving page evidence and hashes | JSON report only |
+| review_chip_identity | Compare manual identity candidates with an optional BOM/device manifest, preserving page evidence and hashes | JSON report only |\n| merge_chip_identity_review | Attach review evidence to inventory components by reference without overwriting source fields | Merged JSON for downstream Excel export |
 | analyze_arxml | Index ARXML elements and candidate references | JSON report only |
 | scan_source | Search C/C++ and supported configuration files | JSON report only |
 | check_traceability | Validate traceability JSON shape and flag gaps | No |
@@ -81,7 +81,7 @@ python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/t
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_chip_manual.py path/to/chip_manual.pdf --out engineering/chip_manual/chip_manual_analysis.json
 python .github/skills/autosar-hw-code-traceability/scripts/extract_chip_tables.py path/to/chip_manual.pdf --out engineering/chip_manual/chip_manual_tables.json
 python .github/skills/autosar-hw-code-traceability/scripts/normalize_chip_tables.py engineering/chip_manual/chip_manual_tables.json --out engineering/chip_manual/chip_manual_review_records.json
-python .github/skills/autosar-hw-code-traceability/scripts/review_chip_identity.py engineering/chip_manual/chip_manual_analysis.json --out engineering/chip_manual/chip_identity_review.json
+python .github/skills/autosar-hw-code-traceability/scripts/review_chip_identity.py engineering/chip_manual/chip_manual_analysis.json --out engineering/chip_manual/chip_identity_review.json\npython .github/skills/autosar-hw-code-traceability/scripts/merge_chip_identity.py engineering/hardware/hardware_inventory.json engineering/chip_manual/chip_identity_review.json --out engineering/chip_manual/hardware_inventory_with_identity.json\npython .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py engineering/chip_manual/hardware_inventory_with_identity.json --out engineering/reports/pin_signal_inventory.xlsx
 # Optional: add --manifest path/to/your_device_manifest.json when you have a BOM manifest
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
 python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read"
