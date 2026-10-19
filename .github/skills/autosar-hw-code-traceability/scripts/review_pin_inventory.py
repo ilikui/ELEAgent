@@ -19,7 +19,7 @@ def sha256(path: Path) -> str:
             digest.update(chunk)
     return digest.hexdigest()
 
-def key(item: dict[str, Any]) -> tuple[str, str, str]:
+def key(item: dict[str, Any]) -> tuple[str, str]:
     return (str(item.get("component_ref", item.get("ref", ""))), str(item.get("pin_number", "")))
 
 def apply_reviews(inventory: dict[str, Any], ledger: dict[str, Any]) -> dict[str, Any]:
