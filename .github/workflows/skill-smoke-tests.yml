@@ -61,3 +61,10 @@ jobs:
         run: python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
       - name: Generate review report from example
         run: python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py examples/traceability.example.json --out /tmp/review_report.md
+      - name: Build schematic-to-code candidate trace graph
+        run: |
+          python .github/skills/autosar-hw-code-traceability/scripts/build_hardware_code_trace.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/hardware_code_trace.json
+          python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py /tmp/hardware_code_trace.json
+          python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py /tmp/hardware_code_trace.json --out /tmp/hardware_code_trace_review.md
+      - name: Validate PIN review ledger
+        run: python -m unittest discover -s tests -p "test_review_pin_inventory.py" -v
