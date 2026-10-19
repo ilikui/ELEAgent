@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".github/skills/autosar-hw-code-traceability/**"
+      - ".github/skills/circuit-schematic-analysis/**"
       - "mcp_server.py"
       - "tests/**"
       - "schemas/**"
@@ -14,6 +15,7 @@ on:
   pull_request:
     paths:
       - ".github/skills/autosar-hw-code-traceability/**"
+      - ".github/skills/circuit-schematic-analysis/**"
       - "mcp_server.py"
       - "tests/**"
       - "schemas/**"
@@ -34,10 +36,12 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
       - name: Compile Python scripts
-        run: python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts tests mcp_server.py
+        run: python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts .github/skills/circuit-schematic-analysis tests mcp_server.py
       - name: Run smoke tests
         run: python -m unittest discover -s tests -v
       - name: Validate example traceability structure
         run: python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
+      - name: Export example PIN inventory to Excel
+        run: python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
       - name: Generate review report from example
         run: python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py examples/traceability.example.json --out /tmp/review_report.md
