@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "notice": "Illustrative only. Replace placeholders with controlled project evidence and real reviewer identity.",
+  "reviews": [
+    {
+      "component_ref": "U_EXAMPLE",
+      "pin_number": "12",
+      "state": "candidate",
+      "reviewer": "reviewer-id",
+      "reviewed_at": "2026-10-19",
+      "note": "Example only; replace with a real review result.",
+      "evidence": [
+        {
+          "document": "schematic.pdf",
+          "revision": "UNKNOWN",
+          "page": 1,
+          "observation": "Replace with an observed fact from the controlled schematic."
+        }
+      ]
+    }
+  ]
+}
