@@ -2,7 +2,9 @@
 engineering/inputs/
 engineering/extracted/
 engineering/reports/
-engineering/traceability/
+engineering/traceability/arxml_analysis.json
+engineering/traceability/arxml_inventory.json
+engineering/traceability/source_hits.json
 __pycache__/
 *.py[cod]
 .venv/
