@@ -104,6 +104,30 @@ Create or present these artifacts without overwriting existing files unless the 
 
 Use `examples/hardware_inventory.example.json` as a schema illustration only. Never copy example component names, nets, values or pin mappings into a customer project.
 
+## Export PIN and signal inventory to Excel
+
+When the user requests an Excel PIN/signal list, first build or review `hardware_inventory.json` using the field conventions in `examples/hardware_inventory.example.json`. Do not export directly from unverified visual guesses. Each pin row should include, where available:
+
+- Signal/net name exactly as drawn and normalized name as a separate field.
+- Device class: `MCU`, `扩展芯片`, `收发器`, `驱动芯片`, `电源芯片`, `连接器`, `其他IC`, `分立器件` or `未确认`.
+- Device reference designator, exact part number, package, pin number/name and datasheet pin function/mux function.
+- Explicit function-owner classification indicating whether the function belongs to the MCU, an I/O expander, or another device. Do not infer this solely from a signal name.
+- Connected net/endpoints, direction, electrical domain, schematic page/sheet, datasheet revision/page/table, evidence, confidence and review state.
+
+The Excel workbook must contain at least:
+1. `PIN信号清单`: one row per pin record, with device class and function owner clearly visible.
+2. `器件清单`: one row per component/device.
+3. `网络与跨页`: net endpoints and cross-sheet link status.
+4. `字段说明`: interpretation and limitations.
+
+Use the maintained exporter from the ELEAgent repository (requires `openpyxl`):
+
+```bash
+python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py engineering/traceability/hardware_inventory.json --out engineering/reports/pin_signal_inventory.xlsx
+```
+
+In VS Code + Copilot, the `export_pin_excel` MCP tool can invoke the same exporter if listed and available. Exporting formats existing JSON evidence; it does not discover missing pins or prove electrical connectivity. Unknown device classes must remain `未确认`, not be guessed. Keep customer-specific output out of public commits.
+
 ## Integration with AUTOSAR Hardware-to-Code Traceability
 
 Use this Skill first for physical connectivity and circuit context. Then hand off confirmed hardware evidence to `autosar-hw-code-traceability` for software/configuration traceability:
