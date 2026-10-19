@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "project": "EXAMPLE_ONLY",
+  "records": [
+    {
+      "id": "TRACE-0001",
+      "requirement": {
+        "id": "REQ-UNKNOWN",
+        "statement": "UNKNOWN",
+        "evidence": []
+      },
+      "hardware": {
+        "signal": "EXAMPLE_SIGNAL",
+        "net": "UNKNOWN",
+        "component_ref": "UNKNOWN",
+        "pin": "UNKNOWN",
+        "evidence": [
+          {
+            "document": "schematic.pdf",
+            "revision": "UNKNOWN",
+            "page": 1,
+            "section_or_region": "needs visual review",
+            "review_state": "unverified"
+          }
+        ]
+      },
+      "chip": {
+        "part_number": "UNKNOWN",
+        "document": "datasheet.pdf",
+        "revision": "UNKNOWN",
+        "section": "UNKNOWN",
+        "page": null,
+        "register_or_pin": "UNKNOWN"
+      },
+      "autosar": {
+        "arxml_path": "UNKNOWN",
+        "xpath": "UNKNOWN",
+        "element_short_name": "UNKNOWN",
+        "module": "UNKNOWN",
+        "parameter": "UNKNOWN",
+        "value": "UNKNOWN",
+        "variant": "UNKNOWN"
+      },
+      "software": {
+        "layer": "UNKNOWN",
+        "file": "UNKNOWN",
+        "symbol": "UNKNOWN",
+        "line_start": null,
+        "line_end": null,
+        "generated": null,
+        "generator_source": null
+      },
+      "verification": {
+        "test_id": "UNKNOWN",
+        "method": "UNKNOWN",
+        "status": "NOT_RUN",
+        "evidence": []
+      },
+      "confidence": "unverified",
+      "status": "needs_human_review",
+      "open_questions": [
+        "Confirm exact net connectivity and MCU pin from controlled schematic revision."
+      ]
+    }
+  ]
+}
