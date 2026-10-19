@@ -17,6 +17,48 @@ def main():
     parser.add_argument("--out", type=Path, default=Path("engineering/reports/review_report.md"))
     args = parser.parse_args()
     data = json.loads(args.file.read_text(encoding="utf-8"))
+    if data.get("report_type") == "schematic_to_autosar_candidate_trace":
+        nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
+        findings = data.get("findings", [])
+        lines = [
+            "# Schematic-to-AUTOSAR Candidate Trace Review", "",
+            f"- Nets: {display(data.get('summary', {}).get('nets'))}",
+            f"- Nodes: {display(data.get('summary', {}).get('nodes'))}",
+            f"- Candidate edges: {display(data.get('summary', {}).get('edges'))}",
+            f"- Findings/gaps: {display(data.get('summary', {}).get('findings'))}",
+            "- Status: analysis only; all name matches remain candidates.", "",
+            "> Exact-name matches do not prove electrical connectivity, ECUC semantics, runtime data flow or safety behavior.", "",
+            "## Trace candidates", ""
+        ]
+        for edge in edges:
+            if not isinstance(edge, dict): continue
+            lines += [f"### {display(edge.get('relation'))}", "",
+                      f"- From: {display(edge.get('from'))}",
+                      f"- To: {display(edge.get('to'))}",
+                      f"- Review state: {display(edge.get('review_state'))}"]
+            if edge.get("warning"): lines.append(f"- Warning: {display(edge.get('warning'))}")
+            lines += [f"- Evidence: {display(edge.get('evidence'))}", ""]
+        lines += ["## Findings and broken links", ""]
+        if findings:
+            for finding in findings:
+                if not isinstance(finding, dict): continue
+                lines += [f"### {display(finding.get('id'))}: {display(finding.get('gap'))}", "",
+                          f"- Classification/severity: {display(finding.get('classification'))} / {display(finding.get('severity'))}",
+                          f"- Net/signal: {display(finding.get('net_id'))} / {display(finding.get('signal'))}",
+                          f"- Next step: {display(finding.get('next_step'))}", ""]
+        else:
+            lines.append("- No gaps emitted by this heuristic run; this is not proof of completeness.")
+        lines += ["## Candidate layer coverage", ""]
+        for layer in ("ECUC", "MCAL", "IoHwAb", "RTE", "SWC"):
+            matches = [node for node in nodes if isinstance(node, dict) and node.get("type") == "arxml_candidate" and layer in node.get("candidate_layer_tags", [])]
+            lines.append(f"- {layer}: {len(matches)} candidate ARXML node(s)")
+        lines += ["", "## Approval gate", "",
+                  "Review each edge against the controlled schematic, exact chip/package/manual, ECUC release-specific configuration, generated-code origin, source call/data flow and verification evidence. Do not treat candidate matches as approved traceability.", ""]
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text("\\n".join(lines), encoding="utf-8")
+        print(f"Report written: {args.out}")
+        return 0
     records = data.get("records", [])
     lines = [
         "# Hardware-to-AUTOSAR Traceability Review", "",
