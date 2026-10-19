@@ -115,6 +115,38 @@ class PinExcelExportTests(unittest.TestCase):
             finally:
                 workbook.close()
 
+    def test_exports_human_review_fields_without_replacing_source_state(self):
+        inventory = {
+            "components": [{"ref": "U1", "device_type": "MCU", "part_number": "PN-1"}],
+            "pins": [{
+                "component_ref": "U1", "pin_number": "4", "net_id": "N1",
+                "review_state": "needs_review",
+                "human_review": {"state": "verified", "entries": [{
+                    "state": "verified", "reviewer": "reviewer-a", "reviewed_at": "2026-10-19",
+                    "note": "Compared against controlled schematic",
+                    "evidence": [{"document": "schematic.pdf", "page": 2, "observation": "Pin label visible"}]
+                }]}
+            }],
+            "nets": [{"net_id": "N1", "name_as_drawn": "IGN_SENSE"}]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, output = root / "inventory.json", root / "out.xlsx"
+            source.write_text(json.dumps(inventory), encoding="utf-8")
+            result = subprocess.run([sys.executable, str(SCRIPT), str(source), "--out", str(output)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            workbook = load_workbook(output, read_only=True, data_only=True)
+            try:
+                ws = workbook["PIN信号清单"]
+                headers = [cell.value for cell in ws[1]]
+                row = [cell.value for cell in ws[2]]
+                self.assertEqual(row[headers.index("审核状态")], "needs_review")
+                self.assertIn("verified", row[headers.index("人工审核状态")])
+                self.assertIn("reviewer-a", row[headers.index("审核人/时间")])
+                self.assertIn("schematic.pdf / 2", row[headers.index("审核备注/证据")])
+            finally:
+                workbook.close()
+
     def test_rejects_invalid_inventory_arrays(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
