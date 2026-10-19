@@ -56,7 +56,7 @@ def main():
         lines += ["", "## Approval gate", "",
                   "Review each edge against the controlled schematic, exact chip/package/manual, ECUC release-specific configuration, generated-code origin, source call/data flow and verification evidence. Do not treat candidate matches as approved traceability.", ""]
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text("\\n".join(lines), encoding="utf-8")
+        args.out.write_text("\n".join(lines), encoding="utf-8")
         print(f"Report written: {args.out}")
         return 0
     records = data.get("records", [])
