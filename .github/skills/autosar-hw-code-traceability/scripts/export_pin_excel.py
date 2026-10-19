@@ -209,7 +209,8 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
             _text(pin.get("sheet") or pin.get("schematic_sheet")),
             _text(pin.get("datasheet_reference") or pin.get("datasheet_ref")),
             _evidence(pin.get("evidence")), _text(pin.get("confidence")),
-            _text(pin.get("review_state") or net.get("review_state"))
+            _text(pin.get("review_state") or net.get("review_state")),
+            *_pin_review_summary(pin)
         ])
     _style_sheet(pin_ws, PIN_HEADERS)
 
