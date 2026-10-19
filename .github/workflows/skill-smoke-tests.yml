@@ -43,6 +43,16 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Validate example traceability structure
         run: python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
+      - name: Extract candidate tables from generated sample PDF
+        run: |
+          python - <<'PY'
+          import fitz
+          with fitz.open() as doc:
+              page = doc.new_page()
+              page.insert_text((72, 72), "GPIO register and pin function overview")
+              doc.save("/tmp/chip_manual_sample.pdf")
+          PY
+          python .github/skills/autosar-hw-code-traceability/scripts/extract_chip_tables.py /tmp/chip_manual_sample.pdf --out /tmp/chip_manual_tables.json
       - name: Export example PIN inventory to Excel
         run: python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
       - name: Generate review report from example
