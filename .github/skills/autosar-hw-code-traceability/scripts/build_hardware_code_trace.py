@@ -39,6 +39,37 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
     if not isinstance(arxml_refs, list): arxml_refs = []
     if not isinstance(source_hits, list): source_hits = []
     nodes, edges, findings = [], [], []
+    component_node_ids = set()
+    for component in components:
+        if not isinstance(component, dict) or component.get("ref") is None:
+            continue
+        ref = str(component["ref"])
+        cid = f"component:{ref}"
+        review = component.get("chip_identity_review", {})
+        nodes.append({"id": cid, "type": "schematic_component", "component_ref": ref,
+                      "part_number": component.get("part_number"), "package": component.get("package"),
+                      "device_type": component.get("device_type") or component.get("component_type"),
+                      "chip_identity_review": review if isinstance(review, dict) else {},
+                      "review_state": component.get("review_state", "unknown"),
+                      "evidence": component.get("evidence", [])})
+        component_node_ids.add(ref)
+        if not component.get("part_number") or norm(component.get("part_number")) in {"unknown", "tbd", "na"}:
+            findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
+                             "severity": "warning", "component_ref": ref, "gap": "component_part_number_missing",
+                             "next_step": "Confirm exact fitted ordering code against controlled BOM and device marking."})
+        if not component.get("package") or norm(component.get("package")) in {"unknown", "tbd", "na"}:
+            findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
+                             "severity": "warning", "component_ref": ref, "gap": "component_package_missing",
+                             "next_step": "Confirm package against BOM, device marking and applicable datasheet."})
+        identity = review if isinstance(review, dict) else {}
+        for check_group in identity.get("checks", []) if isinstance(identity.get("checks", []), list) else []:
+            if not isinstance(check_group, dict): continue
+            for field, check in check_group.items():
+                if isinstance(check, dict) and any(word in str(check.get("status", "")).casefold() for word in ("mismatch", "conflict")):
+                    findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "identity_mismatch",
+                                     "severity": "high", "component_ref": ref, "field": field,
+                                     "status": check.get("status"), "gap": "chip_identity_mismatch_or_conflict",
+                                     "next_step": "Resolve BOM/manual/model/package/revision conflict using controlled evidence; do not auto-select a candidate."})
     for net in nets:
         if not isinstance(net, dict): continue
         net_id = str(net.get("net_id", ""))
@@ -47,6 +78,11 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
         nodes.append({"id": nid, "type": "schematic_net", "net_id": net_id or None,
                       "name_as_drawn": net.get("name_as_drawn"), "normalized_name": net.get("normalized_name"),
                       "review_state": net.get("review_state", "unknown"), "evidence": net.get("evidence", [])})
+        if str(net.get("review_state", "")).casefold() in {"conflict", "ambiguous", "needs_review", "needs_human_review"}:
+            findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "configuration_conflict",
+                             "severity": "warning", "net_id": net_id, "signal": net_name,
+                             "gap": "net_connectivity_not_confirmed", "review_state": net.get("review_state"),
+                             "next_step": "Resolve cross-sheet/net-label conflicts against the controlled schematic or native netlist."})
         matched_pins = pins_by_net.get(net_id, [])
         if not matched_pins:
             findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
@@ -62,6 +98,14 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
                           "datasheet_function": pin.get("datasheet_function") or pin.get("function"),
                           "review_state": pin.get("human_review", {}).get("state", pin.get("review_state", "unknown")),
                           "evidence": pin.get("evidence", [])})
+            if ref in component_node_ids:
+                edges.append({"from": f"component:{ref}", "to": pid, "relation": "component_has_pin",
+                              "evidence": pin.get("evidence", []), "review_state": pin.get("human_review", {}).get("state", pin.get("review_state", "unknown"))})
+            if not pin.get("evidence"):
+                findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "evidence_gap",
+                                 "severity": "warning", "component_ref": ref, "pin_number": pin.get("pin_number"),
+                                 "net_id": net_id, "gap": "pin_mapping_missing_evidence",
+                                 "next_step": "Add controlled schematic page/sheet and pin/net observation evidence."})
             edges.append({"from": nid, "to": pid, "relation": "schematic_net_has_pin",
                           "evidence": pin.get("evidence", []), "review_state": pin.get("review_state", "unknown")})
         token_set = {norm(net_name)}
@@ -117,6 +161,13 @@ def build_graph(inventory: dict[str, Any], arxml: dict[str, Any] | None = None,
                           "evidence": [{"path": item.get("path") or item.get("file"), "line": item.get("line") or item.get("line_number"), "symbol": item.get("symbol")}],
                           "review_state": "candidate_unverified",
                           "warning": "Text match is not proof of call flow, runtime data flow or hardware behavior."})
+    for item in arxml_refs:
+        if isinstance(item, dict) and item.get("resolution") in {"unresolved", "ambiguous_multiple_targets"}:
+            findings.append({"id": f"GAP-{len(findings)+1:04d}", "classification": "traceability_gap",
+                             "severity": "warning", "arxml_file": item.get("file"), "xpath": item.get("xpath"),
+                             "reference": item.get("reference"), "gap": "arxml_reference_unresolved_or_ambiguous",
+                             "resolution": item.get("resolution"),
+                             "next_step": "Resolve the reference against the full release-specific ARXML set and vendor validator."})
     layers = {
         "ECUC": ["ECUC", "ECUC-MODULE-CONFIGURATION-VALUES", "ECUC-CONTAINER-VALUE", "ECUC-NUMERICAL-PARAM-VALUE", "ECUC-TEXTUAL-PARAM-VALUE"],
         "MCAL": ["DIO", "ADC", "PWM", "PORT", "SPI", "CAN", "ICU", "GPT"],
