@@ -117,6 +117,29 @@ def analyze_chip_manual(
 
 
 @mcp.tool()
+def extract_chip_manual_tables(
+    pdf_path: str,
+    output_path: str = "engineering/chip_manual/chip_manual_tables.json",
+    min_rows: int = 2,
+) -> str:
+    """Extract candidate pin/mux/register/electrical/timing tables from a chip PDF.
+
+    Returns page-cited raw cell data, candidate topic labels, document SHA-256 and
+    review flags. Table detection is heuristic; values require verification against
+    the original page. Scanned-page OCR is not performed.
+    """
+    pdf = safe_path(pdf_path, want_dir=False)
+    if pdf.suffix.lower() != ".pdf":
+        raise ValueError("pdf_path must point to a .pdf file.")
+    if min_rows < 1 or min_rows > 10000:
+        raise ValueError("min_rows must be between 1 and 10000.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    return run_script("extract_chip_tables.py", [str(pdf), "--out", str(output), "--min-rows", str(min_rows)], timeout=300)
+
+
+@mcp.tool()
 def analyze_arxml(arxml_path: str, output_path: str = "engineering/traceability/arxml_analysis.json") -> str:
     """Inventory ARXML names and candidate references. This is heuristic, not XSD/ECUC validation."""
     source = safe_path(arxml_path, want_dir=None)
@@ -183,7 +206,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_chip_manual", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
