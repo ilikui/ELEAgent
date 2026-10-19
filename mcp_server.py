@@ -226,6 +226,26 @@ def build_review_report(
 
 
 @mcp.tool()
+def merge_chip_identity_review(
+    inventory_json: str,
+    identity_review_json: str,
+    output_path: str = "engineering/chip_manual/hardware_inventory_with_identity.json",
+) -> str:
+    """Attach chip identity review evidence to matching inventory components by reference.
+
+    Original component fields are preserved; review data remains explicitly unconfirmed.
+    """
+    inventory = safe_path(inventory_json, want_dir=False)
+    review = safe_path(identity_review_json, want_dir=False)
+    if inventory.suffix.lower() != ".json" or review.suffix.lower() != ".json":
+        raise ValueError("Both input paths must point to .json files.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    return run_script("merge_chip_identity.py", [str(inventory), str(review), "--out", str(output)], timeout=120)
+
+
+@mcp.tool()
 def export_pin_excel(inventory_json: str, output_path: str = "engineering/reports/pin_signal_inventory.xlsx") -> str:
     """Export a hardware inventory JSON to an Excel PIN/signal workbook.
 
@@ -250,7 +270,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "review_chip_identity", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "review_chip_identity", "merge_chip_identity_review", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
