@@ -21,7 +21,7 @@ FIELD_PATTERNS = {
         re.compile(r"\b(?:package(?:\s+type)?|package\s+option|package\s+code)\s*[:#=\-]?\s*([A-Z0-9][A-Z0-9._/+\-]{1,})", re.I),
     ],
     "datasheet_revision": [
-        re.compile(r"\b(?:document\s+revision|datasheet\s+revision|revision|rev\.)\s*[:#=\-]?\s*(?:revision\s*)?([A-Z0-9][A-Z0-9._/+\-]{0,15})", re.I),
+        re.compile(r"\b(?:document\s+revision|datasheet\s+revision|rev\.)\s*[:#=\-]?\s*(?:revision\s*)?([A-Z0-9][A-Z0-9._/+\-]{0,15})|(?<!silicon )(?<!device )\brevision\s*[:#=\-]?\s*([A-Z0-9][A-Z0-9._/+\-]{0,15})", re.I),
     ],
     "silicon_revision": [
         re.compile(r"\b(?:silicon\s+revision|device\s+revision|mask\s+set|stepping)\s*[:#=\-]?\s*([A-Z0-9][A-Z0-9._/+\-]{0,15})", re.I),
@@ -52,7 +52,7 @@ def extract_candidates(report: dict[str, Any]) -> dict[str, list[dict[str, Any]]
         for field, patterns in FIELD_PATTERNS.items():
             for pattern in patterns:
                 for match in pattern.finditer(content):
-                    value = match.group(1).strip(" .,:;()[]{}")
+                    value = next((group for group in match.groups() if group), "").strip(" .,:;()[]{}")
                     if not value or len(value) > 80:
                         continue
                     item = {"value": value, "pdf_page": page_no,
