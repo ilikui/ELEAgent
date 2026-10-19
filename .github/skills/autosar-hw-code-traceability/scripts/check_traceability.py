@@ -17,6 +17,30 @@ def main() -> int:
     except (OSError, json.JSONDecodeError) as error:
         print(f"ERROR: cannot read valid JSON: {error}", file=sys.stderr)
         return 2
+    if data.get("report_type") == "schematic_to_autosar_candidate_trace":
+        nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
+        findings = data.get("findings", [])
+        if not all(isinstance(value, list) for value in (nodes, edges, findings)):
+            print("ERROR: graph nodes, edges and findings must be arrays", file=sys.stderr)
+            return 2
+        node_ids = {node.get("id") for node in nodes if isinstance(node, dict)}
+        errors, warnings = [], []
+        for index, edge in enumerate(edges):
+            if not isinstance(edge, dict):
+                errors.append(f"edge-{index}: edge must be an object")
+                continue
+            if edge.get("from") not in node_ids or edge.get("to") not in node_ids:
+                errors.append(f"edge-{index}: references a missing node")
+            if edge.get("review_state") == "candidate_unverified":
+                warnings.append(f"edge-{index}: exact-name candidate remains unverified")
+        for finding in findings:
+            if isinstance(finding, dict):
+                warnings.append(f"{finding.get('id', 'finding')}: {finding.get('gap', 'review finding')}")
+        for message in errors: print("ERROR:", message)
+        for message in warnings: print("WARNING:", message)
+        print(f"Graph nodes: {len(nodes)}; edges: {len(edges)}; findings: {len(findings)}; errors: {len(errors)}; warnings: {len(warnings)}")
+        return 1 if errors else 0
     records = data.get("records")
     if not isinstance(records, list):
         print("ERROR: top-level records must be an array", file=sys.stderr)
