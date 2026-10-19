@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "notice": "Illustrative schema only. These records are placeholders, not a real ECU design.",
+  "documents": [
+    {
+      "document_id": "DOC-EXAMPLE-001",
+      "filename": "example_schematic.pdf",
+      "revision": "UNKNOWN",
+      "revision_source": "not supplied",
+      "sha256": null,
+      "page_count": null
+    }
+  ],
+  "components": [
+    {
+      "ref": "U_EXAMPLE",
+      "part_number": "UNKNOWN",
+      "value": null,
+      "package": "UNKNOWN",
+      "population": "UNKNOWN",
+      "role_hypothesis": "UNKNOWN",
+      "confidence": "unknown",
+      "evidence": [
+        {
+          "document_id": "DOC-EXAMPLE-001",
+          "page": null,
+          "sheet": "UNKNOWN",
+          "location": "UNKNOWN",
+          "observation": "Replace with a directly observed, source-cited fact."
+        }
+      ],
+      "review_state": "needs_review"
+    }
+  ],
+  "pins": [
+    {
+      "component_ref": "U_EXAMPLE",
+      "pin_number": "UNKNOWN",
+      "pin_name_as_drawn": "UNKNOWN",
+      "datasheet_function": "UNKNOWN",
+      "net_id": null,
+      "confidence": "unknown",
+      "evidence": [],
+      "review_state": "needs_review"
+    }
+  ],
+  "nets": [
+    {
+      "net_id": "NET_EXAMPLE",
+      "name_as_drawn": "UNKNOWN",
+      "normalized_name": null,
+      "electrical_domain": "UNKNOWN",
+      "signal_direction": "UNKNOWN",
+      "endpoints": [],
+      "cross_sheet_links": [
+        {
+          "source_sheet": "UNKNOWN",
+          "source_page": null,
+          "source_label": "UNKNOWN",
+          "destination_sheet": "UNKNOWN",
+          "destination_page": null,
+          "destination_label": "UNKNOWN",
+          "status": "ambiguous",
+          "evidence": [],
+          "reason": "No real drawing evidence has been supplied."
+        }
+      ],
+      "confidence": "unknown",
+      "review_state": "needs_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "SCH-EXAMPLE-001",
+      "classification": "evidence_gap",
+      "severity": "info",
+      "confidence": "low",
+      "affected_refs": [],
+      "expected": "UNKNOWN",
+      "observed": "No project evidence supplied.",
+      "evidence": [],
+      "impact": "Cannot establish circuit behavior from a schema placeholder.",
+      "next_step": "Inspect the actual controlled schematic and authoritative datasheet.",
+      "status": "open"
+    }
+  ],
+  "limitations": [
+    "This file is a shape example and contains no valid pinout or net connectivity.",
+    "Visual/OCR interpretation is not equivalent to a native CAD netlist.",
+    "Electrical correctness requires applicable requirements, calculations and verification."
+  ]
+}
