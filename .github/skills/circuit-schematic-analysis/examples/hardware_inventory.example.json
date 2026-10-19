@@ -29,7 +29,9 @@
           "observation": "Replace with a directly observed, source-cited fact."
         }
       ],
-      "review_state": "needs_review"
+      "review_state": "needs_review",
+      "device_type": "未确认",
+      "component_type": "未确认"
     }
   ],
   "pins": [
@@ -40,8 +42,22 @@
       "datasheet_function": "UNKNOWN",
       "net_id": null,
       "confidence": "unknown",
-      "evidence": [],
-      "review_state": "needs_review"
+      "evidence": [
+        {
+          "document_id": "DOC-EXAMPLE-001",
+          "page": null,
+          "sheet": "UNKNOWN",
+          "location": "UNKNOWN",
+          "observation": "Replace with real schematic/datasheet evidence."
+        }
+      ],
+      "review_state": "needs_review",
+      "signal_name": "UNKNOWN",
+      "signal_direction": "UNKNOWN",
+      "page": null,
+      "sheet": "UNKNOWN",
+      "datasheet_reference": "UNKNOWN",
+      "function_owner": "未确认"
     }
   ],
   "nets": [
