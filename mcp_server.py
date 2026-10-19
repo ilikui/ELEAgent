@@ -140,6 +140,25 @@ def extract_chip_manual_tables(
 
 
 @mcp.tool()
+def normalize_chip_manual_tables(
+    tables_json: str,
+    output_path: str = "engineering/chip_manual/chip_manual_review_records.json",
+) -> str:
+    """Map recognized table headers into reviewable pin/register/electrical candidate records.
+
+    Retains raw rows, page citations and document hash. Ambiguous/unrecognized tables
+    remain visible in the review summary; no candidate value is treated as verified.
+    """
+    source = safe_path(tables_json, want_dir=False)
+    if source.suffix.lower() != ".json":
+        raise ValueError("tables_json must point to a .json file.")
+    output = safe_path(output_path, must_exist=False, want_dir=False)
+    if output.suffix.lower() != ".json":
+        raise ValueError("output_path must end with .json.")
+    return run_script("normalize_chip_tables.py", [str(source), "--out", str(output)], timeout=300)
+
+
+@mcp.tool()
 def analyze_arxml(arxml_path: str, output_path: str = "engineering/traceability/arxml_analysis.json") -> str:
     """Inventory ARXML names and candidate references. This is heuristic, not XSD/ECUC validation."""
     source = safe_path(arxml_path, want_dir=None)
@@ -206,7 +225,7 @@ def get_workspace_info() -> str:
         "workspace_exists": root.is_dir(),
         "server": "ELEAgent",
         "transport": "stdio",
-        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
+        "tools": ["extract_pdf", "analyze_chip_manual", "extract_chip_manual_tables", "normalize_chip_manual_tables", "analyze_arxml", "scan_source", "check_traceability", "build_review_report", "export_pin_excel", "get_workspace_info"],
         "write_policy": "No source/ARXML/ECUC/generated-code editing tools are exposed. Analysis tools may write reports/extraction output only within the workspace.",
     }, ensure_ascii=False, indent=2)
 
