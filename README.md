@@ -13,6 +13,7 @@ ELEAgent combines reusable Agent Skills with a **local MCP server implementation
 - Inventory ARXML references heuristically; not a substitute for release-specific XSD/vendor ECUC validation.
 - Search C, C++, headers and supported configuration files for user-supplied terms.
 - Validate traceability record structure and generate Markdown review reports.
+- Export PIN/signal inventories to Excel with MCU vs I/O-expander/device classification, component inventory and cross-sheet net sheets.
 - Turn technical PDFs into private, chapter-based knowledge using the [PDF-to-Skill workflow](.github/skills/pdf-book-to-skill/SKILL.md).
 
 ## VS Code + GitHub Copilot MCP setup
@@ -51,6 +52,7 @@ See the detailed [MCP setup and security guide](docs/mcp-setup.md).
 | `scan_source` | Search C/C++ and supported configuration files | JSON report only |
 | `check_traceability` | Validate traceability JSON shape and flag gaps | No |
 | `build_review_report` | Generate a Markdown evidence review | Report only |
+| `export_pin_excel` | Export PIN/signal inventory JSON to a multi-sheet Excel workbook | Workbook only |
 
 All input/output paths are restricted to `ELEAGENT_WORKSPACE`; absolute paths and path traversal are rejected. No tool is exposed for editing source, ARXML, ECUC configuration or generated code. Extraction/report tools can create output files inside the workspace.
 
@@ -76,6 +78,7 @@ python -m pip install -r requirements.txt
 python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/to/schematic.pdf --out engineering/extracted/pdf_text --render
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
 python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read"
+python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
 python -m unittest discover -s tests -v
 ```
 
