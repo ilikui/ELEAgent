@@ -81,7 +81,8 @@ python .github/skills/autosar-hw-code-traceability/scripts/extract_pdf.py path/t
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_chip_manual.py path/to/chip_manual.pdf --out engineering/chip_manual/chip_manual_analysis.json
 python .github/skills/autosar-hw-code-traceability/scripts/extract_chip_tables.py path/to/chip_manual.pdf --out engineering/chip_manual/chip_manual_tables.json
 python .github/skills/autosar-hw-code-traceability/scripts/normalize_chip_tables.py engineering/chip_manual/chip_manual_tables.json --out engineering/chip_manual/chip_manual_review_records.json
-python .github/skills/autosar-hw-code-traceability/scripts/review_chip_identity.py engineering/chip_manual/chip_manual_analysis.json --manifest engineering/bom/device_manifest.json --out engineering/chip_manual/chip_identity_review.json
+python .github/skills/autosar-hw-code-traceability/scripts/review_chip_identity.py engineering/chip_manual/chip_manual_analysis.json --out engineering/chip_manual/chip_identity_review.json
+# Optional: add --manifest path/to/your_device_manifest.json when you have a BOM manifest
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
 python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read"
 python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
