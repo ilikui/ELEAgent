@@ -29,7 +29,11 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
+      - name: Compile Python scripts
+        run: python -m compileall -q .github/skills/autosar-hw-code-traceability/scripts tests
       - name: Run smoke tests
         run: python -m unittest discover -s tests -v
       - name: Validate example traceability structure
         run: python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py examples/traceability.example.json
+      - name: Generate review report from example
+        run: python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py examples/traceability.example.json --out /tmp/review_report.md
