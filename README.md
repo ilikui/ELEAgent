@@ -16,9 +16,15 @@ python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --te
 python -m unittest discover -s tests -v
 ```
 
+## PDF books and chip manuals → reusable knowledge Skill
+
+Use the [PDF-to-Skill workflow](.github/skills/pdf-book-to-skill/SKILL.md) to transform user-owned PDFs into chapter-aware, searchable knowledge with a glossary, patterns and cheatsheet. It is adapted from [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill). See the [integration guide](docs/pdf-book-to-skill.md) for VS Code/Copilot usage and optional upstream installation.
+
+For a quick local PDF extraction, use the existing `extract_pdf.py` script. Generated source text, page renders and book-derived knowledge should remain local by default; do not commit proprietary manuals or copyrighted book-derived skills to a public repository without authorization.
+
 See [getting started](docs/getting-started.md), [architecture](docs/architecture.md), [data model](docs/data-model.md), [Phase 2 notes](docs/phase-2.md), and the [Copilot Skill](.github/skills/autosar-hw-code-traceability/SKILL.md).
 
-### Safety model
+## Safety model
 
 - Analyze and report by default; do not edit project files until the user approves a concrete change plan.
 - Never invent pins, electrical polarity, register values, requirements, tool results, or build outcomes.
