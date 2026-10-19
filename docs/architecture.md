@@ -11,6 +11,11 @@
 8. Wait for explicit approval before edits.
 9. Execute known project checks; distinguish host tests, target builds and hardware validation.
 
+## PDF-to-Skill knowledge workflow
+For books and technical documents intended for repeated study, use `.github/skills/pdf-book-to-skill/SKILL.md`. This adapts the book-to-skill pattern by separating local deterministic extraction from chapter-aware knowledge generation, and creates an on-demand skill with chapter files, glossary, patterns and cheatsheet. See [PDF integration](pdf-book-to-skill.md) and the [upstream project](https://github.com/virgiliojr94/book-to-skill).
+
+PDF-derived study notes are not evidence of a project's actual hardware wiring, ARXML configuration or runtime behavior. Keep the document-learning workflow separate from the ECU traceability evidence chain.
+
 ## Trust states
 - extracted: machine-extracted but not reviewed
 - human_reviewed: reviewer checked source page/element
