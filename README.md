@@ -13,6 +13,8 @@ ELEAgent combines reusable Agent Skills with a **local MCP server implementation
 - Normalize recognized table headers into reviewable candidate pin/register/electrical records while retaining raw rows and page provenance.
 - Compare label-matched manual identity candidates (part number, package, document revision and silicon revision) with an optional BOM/device manifest; all matches remain unconfirmed.
 - Merge identity review results into matching hardware inventory components without overwriting BOM/source fields, then carry the review status and page evidence into the Excel component sheet.
+- Apply a separate auditable PIN review ledger (candidate/verified/conflict/rejected); verified means evidence reviewed, not engineering or functional-safety approval.
+- Build a conservative schematic-net → component-pin → ARXML/source candidate graph, tag likely ECUC/MCAL/IoHwAb/RTE/SWC layers, and report missing links.
 - Trace evidence from schematic PDFs and chip documentation to MCU pins, ECUC/ARXML, MCAL/BSW/IoHwAb, RTE/SWC and verification.
 - Extract selectable PDF text by page, record SHA-256 and flag low-text pages for visual review; optionally render pages.
 - Inventory ARXML references heuristically; not a substitute for release-specific XSD/vendor ECUC validation.
@@ -51,6 +53,8 @@ See [MCP setup and security guide](docs/mcp-setup.md).
 | normalize_chip_manual_tables | Map recognized headers into candidate records while preserving raw rows, page citations and review status | JSON report only |
 | review_chip_identity | Compare manual identity candidates with an optional BOM/device manifest, preserving page evidence and hashes | JSON report only |
 | merge_chip_identity_review | Attach review evidence to inventory components by reference without overwriting source fields | Merged JSON for downstream Excel export |
+| review_pin_inventory | Apply review ledger to component-reference/pin-number pairs | Reviewed inventory JSON; source fields preserved |
+| build_hardware_code_trace | Link schematic nets/pins to exact-name ARXML/source candidates and emit gaps | Candidate trace graph JSON |
 | analyze_arxml | Index ARXML elements and candidate references | JSON report only |
 | scan_source | Search C/C++ and supported configuration files | JSON report only |
 | check_traceability | Validate traceability JSON shape and flag gaps | No |
@@ -88,7 +92,10 @@ python .github/skills/autosar-hw-code-traceability/scripts/merge_chip_identity.p
 python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py engineering/chip_manual/hardware_inventory_with_identity.json --out engineering/reports/pin_signal_inventory.xlsx
 # Optional: add --manifest path/to/your_device_manifest.json when you have a BOM manifest
 python .github/skills/autosar-hw-code-traceability/scripts/analyze_arxml.py path/to/arxml --out engineering/traceability/arxml_analysis.json
-python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read"
+python .github/skills/autosar-hw-code-traceability/scripts/scan_source.py . --terms "CONFIRMED_NET,Dio_WriteChannel,Rte_Read" --out engineering/traceability/source_hits.json
+python .github/skills/autosar-hw-code-traceability/scripts/build_hardware_code_trace.py engineering/hardware/hardware_inventory_reviewed.json --arxml-index engineering/traceability/arxml_analysis.json --source-hits engineering/traceability/source_hits.json --out engineering/traceability/hardware_code_trace.json
+python .github/skills/autosar-hw-code-traceability/scripts/check_traceability.py engineering/traceability/hardware_code_trace.json
+python .github/skills/autosar-hw-code-traceability/scripts/build_review_report.py engineering/traceability/hardware_code_trace.json --out engineering/reports/hardware_code_trace_review.md
 python .github/skills/autosar-hw-code-traceability/scripts/export_pin_excel.py .github/skills/circuit-schematic-analysis/examples/hardware_inventory.example.json --out /tmp/pin_signal_inventory.xlsx
 python -m unittest discover -s tests -v
 ```
