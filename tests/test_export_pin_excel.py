@@ -124,7 +124,7 @@ class PinExcelExportTests(unittest.TestCase):
                 "human_review": {"state": "verified", "entries": [{
                     "state": "verified", "reviewer": "reviewer-a", "reviewed_at": "2026-10-19",
                     "note": "Compared against controlled schematic",
-                    "evidence": [{"document": "schematic.pdf", "page": 2, "observation": "Pin label visible"}]
+                    "evidence": [{"filename": "schematic.pdf", "page": 2, "observation": "Pin label visible"}]
                 }]}
             }],
             "nets": [{"net_id": "N1", "name_as_drawn": "IGN_SENSE"}]
