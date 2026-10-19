@@ -22,7 +22,8 @@ PIN_HEADERS = [
 ]
 COMPONENT_HEADERS = [
     "器件位号", "器件类别", "器件型号/料号", "封装", "参数/数值",
-    "装配状态", "功能说明（假设/已确认）", "置信度", "审核状态", "证据"
+    "装配状态", "功能说明（假设/已确认）", "置信度", "审核状态", "证据",
+    "手册身份核对状态", "手册候选型号/封装/修订", "身份核对证据"
 ]
 NET_HEADERS = [
     "网络ID", "网络名（原图）", "规范化网络名", "电气域/电压", "信号方向",
@@ -90,6 +91,42 @@ def _function_owner(device_class: str, pin: dict[str, Any] | None = None) -> str
     if device_class in ("未确认", ""):
         return "未确认"
     return "其他器件"
+
+
+def _identity_summary(component: dict[str, Any]) -> tuple[str, str, str]:
+    review = component.get("chip_identity_review")
+    if not isinstance(review, dict):
+        return "", "", ""
+    statuses, candidates, evidence = [], [], []
+    checks_list = review.get("checks", [])
+    for checks in checks_list if isinstance(checks_list, list) else []:
+        if not isinstance(checks, dict):
+            continue
+        for field, label in (("part_number", "型号"), ("package", "封装"),
+                             ("datasheet_revision", "手册修订"), ("silicon_revision", "硅版本")):
+            check = checks.get(field)
+            if not isinstance(check, dict):
+                continue
+            status = _text(check.get("status"))
+            if status:
+                statuses.append(f"{label}:{status}")
+            manifest_value = check.get("manifest_value")
+            if manifest_value not in (None, ""):
+                candidates.append(f"BOM{label}={manifest_value}")
+            manual_candidates = check.get("manual_candidates", [])
+            for candidate in manual_candidates if isinstance(manual_candidates, list) else []:
+                if isinstance(candidate, dict) and candidate.get("value") not in (None, ""):
+                    candidates.append(f"手册{label}={candidate.get('value')} (PDF p.{candidate.get('pdf_page')})")
+                    excerpt = _text(candidate.get("evidence_excerpt"))
+                    if excerpt:
+                        evidence.append(f"{label}: {excerpt}")
+    status_text = "未确认；人工复核必需" if review.get("human_confirmation_required", True) else _text(review.get("decision"))
+    if statuses:
+        status_text += " | " + "；".join(dict.fromkeys(statuses))
+    gaps = review.get("review_gaps", [])
+    if isinstance(gaps, list):
+        evidence.extend(f"缺口:{item.get('field')} - {item.get('reason')}" for item in gaps if isinstance(item, dict))
+    return status_text, "；".join(dict.fromkeys(candidates)), " | ".join(dict.fromkeys(evidence))
 
 
 def _style_sheet(ws, headers: list[str]) -> None:
@@ -162,7 +199,8 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
             _text(component.get("package")), _text(component.get("value")),
             _text(component.get("population")), _text(component.get("role_hypothesis") or component.get("function")),
             _text(component.get("confidence")), _text(component.get("review_state")),
-            _evidence(component.get("evidence"))
+            _evidence(component.get("evidence")),
+            *_identity_summary(component)
         ])
     _style_sheet(comp_ws, COMPONENT_HEADERS)
 
@@ -195,6 +233,7 @@ def export_inventory(inventory: dict[str, Any], output_path: Path) -> int:
         ("功能归属", "优先使用 pins[].function_owner 或 function_owner_as_drawn 的显式值；缺省时才按器件类别推导。此字段不代表已证明软件运行时的数据流。"),
         ("PIN信号清单", "每个 pins 数组记录生成一行；器件/网络信息按 component_ref 和 net_id 关联。"),
         ("证据与置信度", "请填入原理图页码、位号、引脚、数据手册版本/页码及来源。空白字段表示输入数据没有提供，不会自动补造。"),
+        ("手册身份核对", "可选读取 components[].chip_identity_review；报告中的型号/封装/修订候选仅用于核对，即使字符串一致也不自动批准。"),
         ("示例数据", "示例硬件清单为占位数据，导出结果不可当作真实 ECU 引脚表。"),
         ("限制", "Excel 导出只整理已有 JSON 数据，不执行 OCR、原理图识图、电气连通性重建或 AUTOSAR 语义验证。")
     ]
