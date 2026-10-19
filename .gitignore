@@ -1,0 +1,9 @@
+# Local input documents and generated analysis output; adapt to project policy
+engineering/inputs/
+engineering/extracted/
+engineering/reports/
+engineering/traceability/source_hits.json
+__pycache__/
+*.py[cod]
+.venv/
+venv/
