@@ -68,6 +68,7 @@ def main() -> int:
     tables: list[dict[str, Any]] = []
     review_pages: list[dict[str, Any]] = []
     with fitz.open(args.pdf) as doc:
+        page_count = len(doc)
         metadata = doc.metadata or {}
         for page_number, page in enumerate(doc, start=1):
             page_text = (page.get_text("text") or "").strip()
@@ -142,7 +143,7 @@ def main() -> int:
         "document": {
             "file": str(args.pdf),
             "sha256": digest,
-            "pdf_page_count": len(doc),
+            "pdf_page_count": page_count,
             "metadata": metadata,
         },
         "tables_found": len(tables),
